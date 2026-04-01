@@ -9,14 +9,9 @@
   },
   "samples": [
     {
-      "displayName": "AssetLoader Sample",
-      "description": "AssetLoader 示例场景与脚本。",
-      "path": "Samples~/AssetLoader"
-    },
-    {
-      "displayName": "Patch Sample",
-      "description": "Patch 示例场景、资源与入口预制体。",
-      "path": "Samples~/Patch"
+      "displayName": "Patch And AssetsLoad Samples",
+      "description": "Patch And AssetsLoad 示例场景与脚本。",
+      "path": "Samples~"
     }
   ],
   "dependencies": {
