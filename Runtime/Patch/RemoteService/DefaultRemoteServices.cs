@@ -1,0 +1,24 @@
+using YooAsset;
+
+namespace Dories.YooassetSystem.Runtime.Patch.RemoteService
+{
+    public class DefaultRemoteServices : IRemoteServices
+    {
+        private readonly string _defaultHostServer;
+        private readonly string _fallbackHostServer;
+
+        public DefaultRemoteServices(string defaultHostServer, string fallbackHostServer)
+        {
+            _defaultHostServer = defaultHostServer;
+            _fallbackHostServer = fallbackHostServer;
+        }
+        string IRemoteServices.GetRemoteMainURL(string fileName)
+        {
+            return $"{_defaultHostServer}/{fileName}";
+        }
+        string IRemoteServices.GetRemoteFallbackURL(string fileName)
+        {
+            return $"{_fallbackHostServer}/{fileName}";
+        }
+    }
+}

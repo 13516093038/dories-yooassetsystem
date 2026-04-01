@@ -1,0 +1,22 @@
+{
+    "name": "Dories.YooassetSystem.Patch.Runtime",
+    "rootNamespace": "Dories.YooassetSystem.Runtime.Patch",
+    "references": [
+        "YooAsset",
+        "Dories.YooassetSystem.Patch.YooAssetExtensions",
+        "UniTask",
+        "Dories.Componentization.Runtime",
+        "Dories.Fsm.Runtime",
+        "Dories.Reference.Runtime",
+        "Dories.YooassetSystem.AssetLoader.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

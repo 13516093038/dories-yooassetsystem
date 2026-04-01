@@ -1,0 +1,29 @@
+{
+  "name": "com.dories.yooassetsystem",
+  "displayName": "Dories YooassetSystem",
+  "version": "0.0.1",
+  "unity": "2022.3",
+  "description": "Dories YooAsset-based patch and asset loading system.",
+  "author": {
+    "name": "Dories"
+  },
+  "samples": [
+    {
+      "displayName": "AssetLoader Sample",
+      "description": "AssetLoader 示例场景与脚本。",
+      "path": "Samples~/AssetLoader"
+    },
+    {
+      "displayName": "Patch Sample",
+      "description": "Patch 示例场景、资源与入口预制体。",
+      "path": "Samples~/Patch"
+    }
+  ],
+  "dependencies": {
+    "com.dories.componentization": "1.0.0",
+    "com.dories.reference": "1.0.0",
+    "com.dories.fsm": "1.0.0",
+    "com.cysharp.unitask": "2.5.10",
+    "com.tuyoogame.yooasset": "2.3.18"
+  }
+}
