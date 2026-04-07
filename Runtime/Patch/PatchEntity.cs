@@ -88,43 +88,43 @@ namespace Dories.YooassetSystem.Runtime.Patch
             m_OnPatchSuccess += success;
             m_OnPatchFail += fail;
             m_RemoteServices = remoteServices;
-            
+
             switch (m_PlayMode)
             {
                 case PlayMode.EditorSimulateMode:
-                    SetYooAssetInitOperation(new EditorInitOperation());
-                    SetYooAssetRequestPackageVersionOperation(new DefaultRequestPackageVersionOperation());
-                    SetYooAssetUpdatePackageManifestOperation(new DefaultUpdatePackageManifestOperation());
-                    SetYooAssetCreateDownloaderOperation(new DefaultCreateDownloaderOperation());
-                    SetYooAssetDownloadFileOverOperation(new DefaultDownloadFileOverOperation());
-                    SetYooAssetClearCacheBundleOperation(new DefaultClearCacheBundleOperation());
+                    SetYooAssetInitOperation(m_InitOperation ?? new EditorInitOperation());
+                    SetYooAssetRequestPackageVersionOperation(m_RequestPackageVersionOperation ?? new DefaultRequestPackageVersionOperation());
+                    SetYooAssetUpdatePackageManifestOperation(m_UpdatePackageManifestOperation ?? new DefaultUpdatePackageManifestOperation());
+                    SetYooAssetCreateDownloaderOperation(m_CreateDownloaderOperation ?? new DefaultCreateDownloaderOperation());
+                    SetYooAssetDownloadFileOverOperation(m_DownloadFileOverOperation ?? new DefaultDownloadFileOverOperation());
+                    SetYooAssetClearCacheBundleOperation(m_ClearCacheBundleOperation ?? new DefaultClearCacheBundleOperation());
                     break;
 
                 case PlayMode.OfflinePlayMode:
-                    SetYooAssetInitOperation(new OfflineInitOperation());
-                    SetYooAssetRequestPackageVersionOperation(new DefaultRequestPackageVersionOperation());
-                    SetYooAssetUpdatePackageManifestOperation(new DefaultUpdatePackageManifestOperation());
-                    SetYooAssetCreateDownloaderOperation(new DefaultCreateDownloaderOperation());
-                    SetYooAssetDownloadFileOverOperation(new DefaultDownloadFileOverOperation());
-                    SetYooAssetClearCacheBundleOperation(new DefaultClearCacheBundleOperation());
+                    SetYooAssetInitOperation(m_InitOperation ?? new OfflineInitOperation());
+                    SetYooAssetRequestPackageVersionOperation(m_RequestPackageVersionOperation ?? new DefaultRequestPackageVersionOperation());
+                    SetYooAssetUpdatePackageManifestOperation(m_UpdatePackageManifestOperation ?? new DefaultUpdatePackageManifestOperation());
+                    SetYooAssetCreateDownloaderOperation(m_CreateDownloaderOperation ?? new DefaultCreateDownloaderOperation());
+                    SetYooAssetDownloadFileOverOperation(m_DownloadFileOverOperation ?? new DefaultDownloadFileOverOperation());
+                    SetYooAssetClearCacheBundleOperation(m_ClearCacheBundleOperation ?? new DefaultClearCacheBundleOperation());
                     break;
 
                 case PlayMode.HostPlayMode:
-                    SetYooAssetInitOperation(new HostPlayInitOperation());
-                    SetYooAssetRequestPackageVersionOperation(new DefaultRequestPackageVersionOperation());
-                    SetYooAssetUpdatePackageManifestOperation(new DefaultUpdatePackageManifestOperation());
-                    SetYooAssetCreateDownloaderOperation(new DefaultCreateDownloaderOperation());
-                    SetYooAssetDownloadFileOverOperation(new DefaultDownloadFileOverOperation());
-                    SetYooAssetClearCacheBundleOperation(new DefaultClearCacheBundleOperation());
+                    SetYooAssetInitOperation(m_InitOperation ?? new HostPlayInitOperation());
+                    SetYooAssetRequestPackageVersionOperation(m_RequestPackageVersionOperation ?? new DefaultRequestPackageVersionOperation());
+                    SetYooAssetUpdatePackageManifestOperation(m_UpdatePackageManifestOperation ?? new DefaultUpdatePackageManifestOperation());
+                    SetYooAssetCreateDownloaderOperation(m_CreateDownloaderOperation ?? new DefaultCreateDownloaderOperation());
+                    SetYooAssetDownloadFileOverOperation(m_DownloadFileOverOperation ?? new DefaultDownloadFileOverOperation());
+                    SetYooAssetClearCacheBundleOperation(m_ClearCacheBundleOperation ?? new DefaultClearCacheBundleOperation());
                     break;
 
                 case PlayMode.WeakOnlinePlayMode:
-                    SetYooAssetInitOperation(new WeakOnlineInitOperation());
-                    SetYooAssetRequestPackageVersionOperation(new WeakOnlineRequestPackageVersionOperation());
-                    SetYooAssetUpdatePackageManifestOperation(new DefaultUpdatePackageManifestOperation());
-                    SetYooAssetCreateDownloaderOperation(new DefaultCreateDownloaderOperation());
-                    SetYooAssetDownloadFileOverOperation(new DefaultDownloadFileOverOperation());
-                    SetYooAssetClearCacheBundleOperation(new DefaultClearCacheBundleOperation());
+                    SetYooAssetInitOperation(m_InitOperation ?? new WeakOnlineInitOperation());
+                    SetYooAssetRequestPackageVersionOperation(m_RequestPackageVersionOperation ?? new WeakOnlineRequestPackageVersionOperation());
+                    SetYooAssetUpdatePackageManifestOperation(m_UpdatePackageManifestOperation ?? new DefaultUpdatePackageManifestOperation());
+                    SetYooAssetCreateDownloaderOperation(m_CreateDownloaderOperation ?? new DefaultCreateDownloaderOperation());
+                    SetYooAssetDownloadFileOverOperation(m_DownloadFileOverOperation ?? new DefaultDownloadFileOverOperation());
+                    SetYooAssetClearCacheBundleOperation(m_ClearCacheBundleOperation ?? new DefaultClearCacheBundleOperation());
                     break;
                 case PlayMode.WeChatMiniGameMode:
                     break;
