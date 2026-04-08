@@ -9,7 +9,7 @@ namespace Dories.YooassetSystem.Runtime.Patch.Operations.InitPackageOperation
         {
             var createParameters = new HostPlayModeParameters();
             createParameters.BuildinFileSystemParameters =
-                FileSystemParameters.CreateDefaultBuildinFileSystemParameters();
+                FileSystemParameters.CreateDefaultBuildinFileSystemParameters(decryptionServices);
             createParameters.CacheFileSystemParameters =
                 FileSystemParameters.CreateDefaultCacheFileSystemParameters(remoteServices, decryptionServices);
             return package.InitializeAsync(createParameters);
