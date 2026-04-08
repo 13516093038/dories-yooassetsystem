@@ -25,7 +25,8 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
                 var package = YooAssets.TryGetPackage(packageName);
                 if (package == null)
                     package = YooAssets.CreatePackage(packageName);
-                var operation = Owner.m_InitOperation.Init(package, packageName, Owner.m_RemoteServices);
+                var operation = Owner.m_InitOperation.Init(package, packageName, Owner.m_RemoteServices,
+                    Owner.m_DecryptionServices);
                 await operation;
                 if (operation.Status == EOperationStatus.Succeed)
                 {

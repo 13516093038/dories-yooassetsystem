@@ -7,7 +7,8 @@ namespace Dories.YooassetSystem.Runtime.Patch.Operations.InitPackageOperation
     /// </summary>
     public class EditorInitOperation : IYooAssetInitOperation
     {
-        public InitializationOperation Init(ResourcePackage package, string packageName, IRemoteServices remoteServices)
+        public InitializationOperation Init(ResourcePackage package, string packageName, IRemoteServices remoteServices,
+            IDecryptionServices decryptionServices = null)
         {
             var buildResult = EditorSimulateModeHelper.SimulateBuild(packageName);
             var packageRoot = buildResult.PackageRootDirectory;

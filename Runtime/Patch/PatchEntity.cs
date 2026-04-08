@@ -23,6 +23,7 @@ namespace Dories.YooassetSystem.Runtime.Patch
         internal List<string> packagesNameList;
 
         internal IRemoteServices m_RemoteServices;
+        internal IDecryptionServices m_DecryptionServices;
         internal IYooAssetInitOperation m_InitOperation;
         internal IYooAssetRequestPackageVersionOperation m_RequestPackageVersionOperation;
         internal IYooAssetUpdatePackageManifestOperation m_UpdatePackageManifestOperation;
@@ -83,11 +84,12 @@ namespace Dories.YooassetSystem.Runtime.Patch
             m_ClearCacheBundleOperation = clearCacheBundleOperation;
         }
 
-        public void StartPatch(OnPatchSuccess success, OnPatchFail fail, IRemoteServices remoteServices = null)
+        public void StartPatch(OnPatchSuccess success, OnPatchFail fail, IRemoteServices remoteServices = null, IDecryptionServices decryptionServices = null)
         {
             m_OnPatchSuccess += success;
             m_OnPatchFail += fail;
             m_RemoteServices = remoteServices;
+            m_DecryptionServices = decryptionServices;
 
             switch (m_PlayMode)
             {

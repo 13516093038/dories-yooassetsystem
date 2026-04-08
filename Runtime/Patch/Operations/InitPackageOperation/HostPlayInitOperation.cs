@@ -4,13 +4,14 @@ namespace Dories.YooassetSystem.Runtime.Patch.Operations.InitPackageOperation
 {
     public class HostPlayInitOperation : IYooAssetInitOperation
     {
-        public InitializationOperation Init(ResourcePackage package, string packageName, IRemoteServices remoteServices)
+        public InitializationOperation Init(ResourcePackage package, string packageName, IRemoteServices remoteServices,
+            IDecryptionServices decryptionServices)
         {
             var createParameters = new HostPlayModeParameters();
             createParameters.BuildinFileSystemParameters =
                 FileSystemParameters.CreateDefaultBuildinFileSystemParameters();
             createParameters.CacheFileSystemParameters =
-                FileSystemParameters.CreateDefaultCacheFileSystemParameters(remoteServices);
+                FileSystemParameters.CreateDefaultCacheFileSystemParameters(remoteServices, decryptionServices);
             return package.InitializeAsync(createParameters);
         }
     }
