@@ -1,7 +1,7 @@
 {
   "name": "com.dories.yooassetsystem",
   "displayName": "Dories YooassetSystem",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "unity": "2022.3",
   "description": "Dories YooAsset-based patch and asset loading system.",
   "author": {

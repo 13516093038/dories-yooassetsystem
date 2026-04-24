@@ -84,6 +84,11 @@ namespace Dories.YooassetSystem.Runtime.Patch
             m_ClearCacheBundleOperation = clearCacheBundleOperation;
         }
 
+        public void SetPlayMode(PlayMode mode)
+        {
+            m_PlayMode = mode;
+        }
+
         public void StartPatch(OnPatchSuccess success, OnPatchFail fail, IRemoteServices remoteServices = null, IDecryptionServices decryptionServices = null)
         {
             m_OnPatchSuccess += success;
