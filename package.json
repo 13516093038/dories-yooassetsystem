@@ -18,7 +18,6 @@
     "com.dories.componentization": "1.0.0",
     "com.dories.reference": "1.0.0",
     "com.dories.fsm": "1.0.0",
-    "com.cysharp.unitask": "2.5.10",
     "com.tuyoogame.yooasset": "2.3.18"
   }
 }
