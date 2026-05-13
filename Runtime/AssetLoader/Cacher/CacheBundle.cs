@@ -185,7 +185,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.Cacher
             }
             else
             {
-                Debug.Log($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
+                Debug.LogError($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
             }
 
             if (!suspendLoaded)
@@ -301,7 +301,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.Cacher
             }
             else
             {
-                Debug.Log($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
+                Debug.LogError($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
             }
 
             // (Caution) If use sync to load scene.isLoaded return false -> Why??
@@ -579,7 +579,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.Cacher
             }
             else
             {
-                Debug.Log($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
+                Debug.LogError($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
             }
 
             if (loaded)
@@ -669,7 +669,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.Cacher
                     }
                     else
                     {
-                        Debug.Log($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
+                        Debug.LogError($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
                     }
 
                     if (loaded)
@@ -818,7 +818,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.Cacher
             }
             else
             {
-                Debug.Log($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
+                Debug.LogError($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
             }
 
             if (loaded)
@@ -918,7 +918,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.Cacher
                 }
                 else
                 {
-                    Debug.Log($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
+                    Debug.LogError($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
                 }
 
                 if (loaded)
@@ -1103,7 +1103,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.Cacher
             }
             else
             {
-                Debug.Log($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
+                Debug.LogError($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
             }
 
             if (loaded)
@@ -1193,7 +1193,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.Cacher
                     }
                     else
                     {
-                        Debug.Log($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
+                        Debug.LogError($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
                     }
 
                     if (loaded)
@@ -1344,7 +1344,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.Cacher
             }
             else
             {
-                Debug.Log($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
+                Debug.LogError($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
             }
 
             if (loaded)
@@ -1423,7 +1423,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.Cacher
                 }
                 else
                 {
-                    Debug.Log($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
+                    Debug.LogError($"Package: {packageName} doesn't exist or Asset: {assetName} location invalid.");
                 }
 
                 if (loaded)
