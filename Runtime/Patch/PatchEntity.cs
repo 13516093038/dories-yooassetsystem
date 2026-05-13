@@ -133,6 +133,16 @@ namespace Dories.YooassetSystem.Runtime.Patch
                     SetYooAssetDownloadFileOverOperation(m_DownloadFileOverOperation ?? new DefaultDownloadFileOverOperation());
                     SetYooAssetClearCacheBundleOperation(m_ClearCacheBundleOperation ?? new DefaultClearCacheBundleOperation());
                     break;
+                
+                case PlayMode.TTMiniGameMode:
+                    SetYooAssetInitOperation(m_InitOperation ?? new TTMiniGameInitOperation());
+                    SetYooAssetRequestPackageVersionOperation(m_RequestPackageVersionOperation ?? new DefaultRequestPackageVersionOperation());
+                    SetYooAssetUpdatePackageManifestOperation(m_UpdatePackageManifestOperation ?? new DefaultUpdatePackageManifestOperation());
+                    SetYooAssetCreateDownloaderOperation(m_CreateDownloaderOperation ?? new DefaultCreateDownloaderOperation());
+                    SetYooAssetDownloadFileOverOperation(m_DownloadFileOverOperation ?? new DefaultDownloadFileOverOperation());
+                    SetYooAssetClearCacheBundleOperation(m_ClearCacheBundleOperation ?? new DefaultClearCacheBundleOperation());
+                    break;
+                
                 case PlayMode.WeChatMiniGameMode:
                     break;
             }

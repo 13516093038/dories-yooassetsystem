@@ -26,6 +26,11 @@ namespace Dories.YooassetSystem.Runtime.Patch
         /// 微信小游戏运行模式
         /// </summary>
         WeChatMiniGameMode,
+        
+        /// <summary>
+        /// 抖音小游戏运行模式
+        /// </summary>
+        TTMiniGameMode,
 
         /// <summary>
         /// 自定义运行模式
