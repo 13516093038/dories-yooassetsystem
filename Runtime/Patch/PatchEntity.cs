@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Dories.Componentization.Runtime;
 using Dories.Componentization.Runtime.Utils;
 using Dories.YooassetSystem.Runtime.Patch.Operations.ClearCacheBundleOperation;
 using Dories.YooassetSystem.Runtime.Patch.Operations.CreateDownloaderOperation;
@@ -15,22 +16,28 @@ namespace Dories.YooassetSystem.Runtime.Patch
 {
     public delegate void OnPatchSuccess();
     public delegate void OnPatchFail(string errorMsg);
-    
-    public class PatchEntity : MonoBehaviour
-    {
-        [SerializeField] private PlayMode m_PlayMode;
-        [SerializeField, Header("AppPackagesName")]
-        internal List<string> packagesNameList;
 
-        internal IRemoteServices m_RemoteServices;
-        internal IDecryptionServices m_DecryptionServices;
-        internal IYooAssetInitOperation m_InitOperation;
-        internal IYooAssetRequestPackageVersionOperation m_RequestPackageVersionOperation;
-        internal IYooAssetUpdatePackageManifestOperation m_UpdatePackageManifestOperation;
-        internal IYooAssetCreateDownloaderOperation m_CreateDownloaderOperation;
-        internal IYooAssetsDownloadFileOverOperation m_DownloadFileOverOperation;
-        internal IYooAssetClearCacheBundleOperation m_ClearCacheBundleOperation;
-        internal Dictionary<string, PackageInfo> m_PackageInfoDic;
+    public class PackageInfo
+    {
+        [SerializeField] private string _packageName;
+        [SerializeField] private PlayMode _playMode;
+
+        private bool _isSupportWeakOnline;
+        private IRemoteService _remoteService;
+        private IBundleDecryptor _bundleDecryptor;
+    }
+    
+    public class PatchEntity : EntityMono
+    {
+        [SerializeField] private bool _isEditorMode;
+
+        [SerializeField] private PlayMode _PlayMode;
+        [SerializeField, Header("AppPackagesInfo")]
+        internal List<PackageInfo> _packagesInfoList;
+
+        internal IRemoteService _remoteService;
+        internal IBundleDecryptor _decryptionService;
+     
         internal Dictionary<string, ResourceDownloaderOperation> m_Downloaders;
         internal OnPatchSuccess m_OnPatchSuccess;
         internal OnPatchFail m_OnPatchFail;
@@ -39,7 +46,6 @@ namespace Dories.YooassetSystem.Runtime.Patch
 
         private void Awake()
         {
-            m_PackageInfoDic = new Dictionary<string, PackageInfo>();
             m_Fsm = ComponentFactory.GetOrAddSingletonComponent<FsmEntity>().CreateFsm(this);
             m_Fsm.AddState(new YooAssetInitState());
             m_Fsm.AddState(new YooAssetRequestPackageVersionState());
@@ -50,43 +56,6 @@ namespace Dories.YooassetSystem.Runtime.Patch
             m_Fsm.AddState(new YooAssetClearCacheBundleState());
 
             m_OnPatchSuccess += Clear;
-        }
-
-        public void SetYooAssetInitOperation(IYooAssetInitOperation initOperation)
-        {
-            m_InitOperation = initOperation;
-        }
-
-        public void SetYooAssetRequestPackageVersionOperation(
-            IYooAssetRequestPackageVersionOperation requestPackageVersionOperation)
-        {
-            m_RequestPackageVersionOperation = requestPackageVersionOperation;
-        }
-
-        public void SetYooAssetUpdatePackageManifestOperation(
-            IYooAssetUpdatePackageManifestOperation updatePackageManifestOperation)
-        {
-            m_UpdatePackageManifestOperation = updatePackageManifestOperation;
-        }
-
-        public void SetYooAssetCreateDownloaderOperation(IYooAssetCreateDownloaderOperation createDownloaderOperation)
-        {
-            m_CreateDownloaderOperation = createDownloaderOperation;
-        }
-
-        public void SetYooAssetDownloadFileOverOperation(IYooAssetsDownloadFileOverOperation downloadFileOverOperation)
-        {
-            m_DownloadFileOverOperation = downloadFileOverOperation;
-        }
-
-        public void SetYooAssetClearCacheBundleOperation(IYooAssetClearCacheBundleOperation clearCacheBundleOperation)
-        {
-            m_ClearCacheBundleOperation = clearCacheBundleOperation;
-        }
-
-        public void SetPlayMode(PlayMode mode)
-        {
-            m_PlayMode = mode;
         }
 
         public void StartPatch(OnPatchSuccess success, OnPatchFail fail, IRemoteServices remoteServices = null, IDecryptionServices decryptionServices = null)
