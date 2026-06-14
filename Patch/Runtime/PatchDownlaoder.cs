@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using YooAsset;
 
-namespace Dories.YooassetSystem.Runtime.Patch
+namespace Dories.YooAssetSystem.Runtime.Patch
 {
     public class PatchDownlaoder
     {

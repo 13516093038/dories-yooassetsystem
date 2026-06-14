@@ -1,20 +1,18 @@
 using System.Threading.Tasks;
 using Dories.Fsm.Runtime;
-using Dories.YooassetSystem.Patch.Runtime.Operations;
+using Dories.YooAssetSystem.Patch.Runtime.Operations;
+using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
 using UnityEngine;
 using YooAsset;
 
-namespace Dories.YooassetSystem.Runtime.Patch.States
+namespace Dories.YooAssetSystem.Runtime.Patch.States
 {
-    public class YooAssetInitState : FsmState<PatchEntity>
+    public class YooAssetInitState : FsmNodeEntity<PatchEntity>
     {
         private Fsm<PatchEntity> m_Fsm;
 
-        protected override void OnEnter(Fsm<PatchEntity> fsm)
+        protected internal override void OnEnter()
         {
-            base.OnEnter(fsm);
-
-            m_Fsm = fsm;
             _ = InitTask();
         }
 
@@ -22,18 +20,18 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
         {
             // 创建资源包裹类
             YooAssets.Initialize();
-            foreach (var packageInfo in Owner.packagesInfoList)
+            foreach (var packageInfo in _owner.packagesInfoList)
             {
                 var package = YooAssets.GetPackage(packageInfo.PackageName) ?? YooAssets.CreatePackage(packageInfo.PackageName);
                 IYooAssetInitOperation initOperation = null;
 
-                if (Application.isEditor && !Owner.isReleaseMode)
+                if (Application.isEditor && !_owner.isReleaseMode)
                 {
                     initOperation = new EditorInitOperation();
                 }
                 else
                 {
-                    switch (Owner.playMode)
+                    switch (_owner.playMode)
                     {
                         case PlayMode.OfflinePlayMode:
                             initOperation = new OfflineInitOperation();
@@ -55,26 +53,25 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
 
                 if (initOperation == null)
                 {
-                    Owner._patchError?.Invoke($"未支持的 PlayMode: {Owner.playMode}");
-                    Owner._patchFailed?.Invoke($"未支持的 PlayMode: {Owner.playMode}");
+                    _owner._patchError?.Invoke($"未支持的 PlayMode: {_owner.playMode}");
+                    _owner._patchFailed?.Invoke($"未支持的 PlayMode: {_owner.playMode}");
                     return;
                 }
 
                 var operation = initOperation.Initialize(
                     package,
                     packageInfo.RemoteService,
-                    packageInfo.BundleDecryptor,
-                    Owner.ManifestDecryptor);
+                    packageInfo.BundleDecryptor);
                 await operation;
 
                 if (operation.Status != EOperationStatus.Succeeded)
                 {
-                    Owner._patchFailed?.Invoke(operation.Error);
-                    Owner._patchError?.Invoke(operation.Error);
+                    _owner._patchFailed?.Invoke(operation.Error);
+                    _owner._patchError?.Invoke(operation.Error);
                     return;
                 }
             }
-            ChangeState<YooAssetRequestPackageVersionState>(m_Fsm);
+            ChangeState<YooAssetRequestPackageVersionState>();
         }
     }
 }

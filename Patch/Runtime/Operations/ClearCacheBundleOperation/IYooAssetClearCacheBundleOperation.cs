@@ -1,6 +1,6 @@
 using YooAsset;
 
-namespace Dories.YooassetSystem.Patch.Runtime.Operations
+namespace Dories.YooAssetSystem.Patch.Runtime.Operations
 {
     public interface IYooAssetClearCacheBundleOperation
     {

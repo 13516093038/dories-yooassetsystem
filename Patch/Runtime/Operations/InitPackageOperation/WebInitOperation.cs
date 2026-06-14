@@ -1,15 +1,15 @@
 using YooAsset;
 
-namespace Dories.YooassetSystem.Patch.Runtime.Operations
+namespace Dories.YooAssetSystem.Patch.Runtime.Operations
 {
     public class WebInitOperation : IYooAssetInitOperation
     {
         public InitializePackageOperation Initialize(ResourcePackage package, IRemoteService remoteServices,
-            IBundleDecryptor bundleDecryptor = null, IManifestDecryptor manifestDecryptor = null)
+            IBundleDecryptor bundleDecryptor = null)
         {
             var createParameters = new WebPlayModeOptions();
             WebPlayModeInitHelper.ApplyDefaultWebOptions(
-                createParameters, remoteServices, bundleDecryptor, manifestDecryptor);
+                createParameters, remoteServices, bundleDecryptor);
 
             return package.InitializePackageAsync(createParameters);
         }

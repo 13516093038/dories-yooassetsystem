@@ -1,19 +1,21 @@
  
- using Dories.YooassetSystem.Runtime.Patch;
+ using Dories.YooAssetSystem.Patch.Runtime.Operations;
+ using Dories.YooAssetSystem.Runtime.Patch;
+ using Dories.YooAssetSystem.Runtime.Patch.LogSystem;
  using UnityEditor;
  using YooAsset;
  using YooAsset.Editor;
 
- namespace Dories.YooassetSystem.Patch.Editor.Inspector
+ namespace Dories.YooAssetSystem.Patch.Editor.Inspector
  {
      [CustomEditor(typeof(PatchEntity))]
      public class PatchEntityEditor : UnityEditor.Editor
      {
          // 缓存 SerializedProperty，避免每帧 FindProperty
+         private SerializedProperty _logNameProp;
          private SerializedProperty _isReleaseModeProp;
          private SerializedProperty _playModeProp;
          private SerializedProperty _packagesInfoListProp;
-         private SerializedProperty _manifestDecryptorProp;
 
          private const int DefaultTimeout = 60;
 
@@ -24,17 +26,16 @@
 
          private void OnEnable()
          {
+             _logNameProp = serializedObject.FindProperty("iLog");
              _isReleaseModeProp = serializedObject.FindProperty("isReleaseMode");
              _playModeProp = serializedObject.FindProperty("playMode");
              _packagesInfoListProp = serializedObject.FindProperty("packagesInfoList");
-             _manifestDecryptorProp = serializedObject.FindProperty("manifestDecryptor");
          }
 
          public override void OnInspectorGUI()
          {
              serializedObject.Update();
              DrawPatchSettings();
-             DrawManifestDecryptor();
              EditorGUILayout.Space(8);
              DrawPackagesList();
              serializedObject.ApplyModifiedProperties();
@@ -44,6 +45,15 @@
          {
              EditorGUILayout.PropertyField(_isReleaseModeProp);
              EditorGUILayout.PropertyField(_playModeProp);
+             
+             TypeSelectorUtility.DrawTypePopup(
+                 _logNameProp,
+                 typeof(ILog),
+                 "ILog",
+                 false,
+                 true,
+                 "You must select a Logger"
+             );
          }
 
          private void DrawPackagesList()
@@ -65,7 +75,7 @@
 
              for (int i = 0; i < _packagesInfoListProp.arraySize; i++)
              {
-                 var element = _packagesInfoListProp.GetArrayElementAtIndex(i);
+                 SerializedProperty element = _packagesInfoListProp.GetArrayElementAtIndex(i);
                  EditorGUILayout.BeginVertical("box");
                  element.isExpanded = EditorGUILayout.Foldout(
                      element.isExpanded,
@@ -124,9 +134,9 @@
                          "Bundle Decryptor"
                      );
 
-                     EditorGUILayout.Space(2);
+                     EditorGUILayout.Space(4);
 
-                     
+                     DrawClearCacheBundleInfo(element);
 
                      EditorGUI.indentLevel--;
                  }
@@ -136,30 +146,33 @@
              }
          }
 
-         private void DrawManifestDecryptor()
+         private void DrawClearCacheBundleInfo(SerializedProperty fatherProperty)
          {
-             EditorGUILayout.LabelField("App Packages Info", EditorStyles.boldLabel);
+             EditorGUILayout.BeginVertical("box");
+             //var packageNameProp = element.FindPropertyRelative("packageName");
+             EditorGUILayout.LabelField("Package Clear Cache Setting", EditorStyles.boldLabel);
+             EditorGUILayout.Space(2);
+             var clearCacheBundleInfoProperty = fatherProperty.FindPropertyRelative("clearCacheBundleInfo");
 
-             TypeSelectorUtility.DrawTypePopup(
-                 _manifestDecryptorProp,
-                 typeof(IManifestDecryptor),
-                 "Manifest Decryptor",
-                 false
-             );
-         }
+             var modeProp = clearCacheBundleInfoProperty.FindPropertyRelative("mode");
+             EditorGUILayout.PropertyField(modeProp);
 
-         private void DrawClearCacheBundleInfo()
-         {
-             EditorGUILayout.LabelField("Clear Cache Bundle Info", EditorStyles.boldLabel);
-             EditorGUILayout.PropertyField(_clearCacheBundleInfoModeProp);
-             if (_clearCacheBundleInfoModeProp.isExpanded)
+             var mode = (ClearCacheOperationMode)modeProp.enumValueIndex;
+             if (mode == ClearCacheOperationMode.ClearBundleFilesByLocations)
              {
-                 EditorGUI.indentLevel++;
-                 EditorGUILayout.PropertyField(_clearCacheBundleInfoModeProp.FindPropertyRelative("mode"));
-                 EditorGUILayout.PropertyField(_clearCacheBundleInfoModeProp.FindPropertyRelative("locations"));
-                 EditorGUILayout.PropertyField(_clearCacheBundleInfoModeProp.FindPropertyRelative("tags"));
-                 EditorGUI.indentLevel--;
+                 var locationsProp = clearCacheBundleInfoProperty.FindPropertyRelative("locations");
+                 EditorGUILayout.PropertyField(locationsProp);
              }
+             else if (mode == ClearCacheOperationMode.ClearBundleFilesByTags)
+             {
+                 var tagsProp = clearCacheBundleInfoProperty.FindPropertyRelative("tags");
+                 EditorGUILayout.PropertyField(tagsProp);
+             }
+
+             EditorGUILayout.EndVertical();
+
+
+
          }
      }
  }

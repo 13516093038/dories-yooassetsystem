@@ -1,7 +1,7 @@
 using System;
 using YooAsset;
 
-namespace Dories.YooassetSystem.Patch.Runtime.Operations
+namespace Dories.YooAssetSystem.Patch.Runtime.Operations
 {
     public enum ClearCacheOperationMode
     {

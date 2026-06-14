@@ -1,7 +1,8 @@
 using System.Threading.Tasks;
+using UnityEngine;
 using YooAsset;
 
-namespace Dories.YooassetSystem.Patch.Runtime.Operations
+namespace Dories.YooAssetSystem.Patch.Runtime.Operations
 {
     public class DefaultRequestPackageVersionOperation : IYooAssetRequestPackageVersionOperation
     {
@@ -12,7 +13,7 @@ namespace Dories.YooassetSystem.Patch.Runtime.Operations
 
             if (operation.Status == EOperationStatus.Succeeded)
             {
-                PlayerPrefs.SetString(package.PackageName + "_VERSION", operation.PackageVersion);
+                PlayerPrefs.SetString(package.PackageName + "_GAME_VERSION", operation.PackageVersion);
                 return operation.PackageVersion;
             }
 

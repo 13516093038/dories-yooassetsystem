@@ -1,19 +1,17 @@
 using System.Collections.Generic;
 using Dories.Fsm.Runtime;
-using Dories.YooassetSystem.Patch.Runtime.Operations;
+using Dories.YooAssetSystem.Patch.Runtime.Operations;
+using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
 using YooAsset;
 
-namespace Dories.YooassetSystem.Runtime.Patch.States
+namespace Dories.YooAssetSystem.Runtime.Patch.States
 {
-    public class YooAssetCreateDownloaderState : FsmState<PatchEntity>
+    public class YooAssetCreateDownloaderState : FsmNodeEntity<PatchEntity>
     {
         private Fsm<PatchEntity> m_Fsm;
         
-        protected override void OnEnter(Fsm<PatchEntity> fsm)
+        protected internal override void OnEnter()
         {
-            base.OnEnter(fsm);
-            
-            m_Fsm = fsm;
             CreateDownloaderTask();
         }
 
@@ -21,15 +19,15 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
         {
             var createDownloaderOperation = new DefaultCreateDownloaderOperation();
 
-            foreach (var packageInfo in Owner.packagesInfoList)
+            foreach (var packageInfo in _owner.packagesInfoList)
             {
-                if (Owner.m_Downloaders == null)
+                if (_owner.m_Downloaders == null)
                 {
-                    Owner.m_Downloaders = new();
+                    _owner.m_Downloaders = new();
                 }
 
                 var package = YooAssets.GetPackage(packageInfo.PackageName);
-                Owner.m_Downloaders.Add(packageInfo.PackageName,
+                _owner.m_Downloaders.Add(packageInfo.PackageName,
                     createDownloaderOperation.CreateDownloader(package, packageInfo.DownloadingMaxNum,
                         packageInfo.FailedTryAgain));
             }
@@ -37,7 +35,7 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
             int totalDownloadCount = 0;
             List<string> packageNames = new List<string>();
 
-            foreach (var packageName in Owner.m_Downloaders)
+            foreach (var packageName in _owner.m_Downloaders)
             {
                 totalDownloadCount +=  packageName.Value.TotalDownloadCount;
                 packageNames.Add(packageName.Key);
@@ -46,14 +44,14 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
             if ( totalDownloadCount == 0)
             {
                 //无需下载
-                ChangeState<YooAssetDownloadFileOverState>(m_Fsm);
+                ChangeState<YooAssetDownloadFileOverState>();
             }
             else
             {
                 var patchDowner = new PatchDownlaoder(packageNames);
-                Owner._patchDowner = patchDowner;
-                Owner._needUpdateListener?.Invoke(patchDowner);
-                ChangeState<YooAssetDownloadPackageFilesState>(m_Fsm);
+                _owner._patchDowner = patchDowner;
+                _owner._needUpdateListener?.Invoke(patchDowner);
+                ChangeState<YooAssetDownloadPackageFilesState>();
             }   
         }
     }

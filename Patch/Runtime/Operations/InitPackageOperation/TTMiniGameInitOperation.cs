@@ -1,6 +1,6 @@
 using YooAsset;
 
-namespace Dories.YooassetSystem.Patch.Runtime.Operations
+namespace Dories.YooAssetSystem.Patch.Runtime.Operations
 {
     /// <summary>
     /// 抖音小游戏初始化操作。
@@ -14,8 +14,7 @@ namespace Dories.YooassetSystem.Patch.Runtime.Operations
         public InitializePackageOperation Initialize(
             ResourcePackage package,
             IRemoteService remoteServices,
-            IBundleDecryptor bundleDecryptor = null,
-            IManifestDecryptor manifestDecryptor = null)
+            IBundleDecryptor bundleDecryptor = null)
         {
             var createParameters = new WebPlayModeOptions();
 
@@ -24,7 +23,7 @@ namespace Dories.YooassetSystem.Patch.Runtime.Operations
 #else
             // 未安装抖音插件或在 Editor 中调试时，回退到普通 Web 模式
             WebPlayModeInitHelper.ApplyDefaultWebOptions(
-                createParameters, remoteServices, bundleDecryptor, manifestDecryptor);
+                createParameters, remoteServices, bundleDecryptor);
 #endif
 
             return package.InitializePackageAsync(createParameters);
@@ -34,17 +33,11 @@ namespace Dories.YooassetSystem.Patch.Runtime.Operations
         private static void ApplyTTPlatformOptions(
             WebPlayModeOptions createParameters,
             IRemoteService remoteServices,
-            IBundleDecryptor bundleDecryptor,
-            IManifestDecryptor manifestDecryptor)
+            IBundleDecryptor bundleDecryptor)
         {
             var webNetworkParams = bundleDecryptor != null
                 ? TiktokFileSystemCreater.CreateFileSystemParameters(remoteServices, bundleDecryptor)
                 : TiktokFileSystemCreater.CreateFileSystemParameters(remoteServices);
-
-            if (manifestDecryptor != null)
-            {
-                webNetworkParams.AddParameter(EFileSystemParameter.ManifestDecryptor, manifestDecryptor);
-            }
 
             createParameters.WebNetworkFileSystemParameters = webNetworkParams;
         }

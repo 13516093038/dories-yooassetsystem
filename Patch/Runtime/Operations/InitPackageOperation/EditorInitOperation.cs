@@ -1,6 +1,6 @@
 using YooAsset;
 
-namespace Dories.YooassetSystem.Patch.Runtime.Operations
+namespace Dories.YooAssetSystem.Patch.Runtime.Operations
 {
     /// <summary>
     /// 编辑器初始化操作
@@ -8,7 +8,7 @@ namespace Dories.YooassetSystem.Patch.Runtime.Operations
     public class EditorInitOperation : IYooAssetInitOperation
     {
         public InitializePackageOperation Initialize(ResourcePackage package, IRemoteService remoteServices,
-            IBundleDecryptor bundleDecryptor = null, IManifestDecryptor manifestDecryptor = null)
+            IBundleDecryptor bundleDecryptor = null)
         {
             var buildResult =
                 EditorSimulateBuildInvoker.Build(package.PackageName, (int)EBundleType.VirtualAssetBundle);

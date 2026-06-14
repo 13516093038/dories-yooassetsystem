@@ -1,4 +1,4 @@
-namespace Dories.YooassetSystem.Runtime.Patch
+namespace Dories.YooAssetSystem.Runtime.Patch
 {
     public enum PlayMode
     {

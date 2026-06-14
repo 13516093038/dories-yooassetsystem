@@ -1,6 +1,6 @@
 using YooAsset;
 
-namespace Dories.YooassetSystem.Patch.Runtime.Operations
+namespace Dories.YooAssetSystem.Patch.Runtime.Operations
 {
     /// <summary>
     /// 热更新初始化操作
@@ -8,7 +8,7 @@ namespace Dories.YooassetSystem.Patch.Runtime.Operations
     public class HostPlayInitOperation : IYooAssetInitOperation
     {
         public InitializePackageOperation Initialize(ResourcePackage package, IRemoteService remoteServices,
-            IBundleDecryptor bundleDecryptor = null, IManifestDecryptor manifestDecryptor = null)
+            IBundleDecryptor bundleDecryptor = null)
         {
             var cacheFileSystemParams = FileSystemParameters.CreateDefaultSandboxFileSystemParameters(remoteServices);
             var builtinFileSystemParams = FileSystemParameters.CreateDefaultBuiltinFileSystemParameters();
@@ -16,10 +16,6 @@ namespace Dories.YooassetSystem.Patch.Runtime.Operations
             if (bundleDecryptor != null)
             {
                 builtinFileSystemParams.AddParameter(EFileSystemParameter.AssetBundleDecryptor, bundleDecryptor);
-            }
-            if (manifestDecryptor != null)
-            {
-                builtinFileSystemParams.AddParameter(EFileSystemParameter.ManifestDecryptor, manifestDecryptor);
             }
 
             var createParameters = new HostPlayModeOptions();

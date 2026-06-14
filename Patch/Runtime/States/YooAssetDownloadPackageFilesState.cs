@@ -1,23 +1,15 @@
-using Dories.Fsm.Runtime;
+using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
 
-namespace Dories.YooassetSystem.Runtime.Patch.States
+namespace Dories.YooAssetSystem.Runtime.Patch.States
 {
     /// <summary>
     /// 资源文件下载状态
     /// </summary>
-    public class YooAssetDownloadPackageFilesState : FsmState<PatchEntity>
+    public class YooAssetDownloadPackageFilesState : FsmNodeEntity<PatchEntity>
     {
-        private Fsm<PatchEntity> m_Fsm;
-
-        protected override void OnEnter(Fsm<PatchEntity> fsm)
+        protected internal override void OnEnter()
         {
-            base.OnEnter(fsm);
-            
-            m_Fsm = fsm;
-            Owner._patchDowner._allPackageDownloadCompleted = () =>
-            {
-                ChangeState<YooAssetDownloadFileOverState>(m_Fsm);
-            };
+            _owner._patchDowner._allPackageDownloadCompleted = ChangeState<YooAssetDownloadFileOverState>;
         }
     }
 }

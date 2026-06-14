@@ -1,26 +1,46 @@
 using System.Threading.Tasks;
-using Dories.Fsm.Runtime;
-using Dories.YooassetSystem.Patch.Runtime.Operations;
+using Dories.YooAssetSystem.Patch.Runtime.Operations;
+using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
 using YooAsset;
 
-namespace Dories.YooassetSystem.Runtime.Patch.States
+namespace Dories.YooAssetSystem.Runtime.Patch.States
 {
-    public class YooAssetClearCacheBundleState : FsmState<PatchEntity>
+    public class YooAssetClearCacheBundleState : FsmNodeEntity<PatchEntity>
     {
-        protected override void OnEnter(Fsm<PatchEntity> fsm)
+        protected internal override void OnEnter()
         {
-            base.OnEnter(fsm);
             _ = ClearCacheBundle();
         }
         
-        private async ValueTask ClearCacheBundle()
+        private async Task ClearCacheBundle()
         {
-            foreach (var packageInfo in Owner.packagesInfoList)
+            foreach (var packageInfo in _owner.packagesInfoList)
             {
+                ClearCacheOptions clearCacheOptions;
+
+                if (packageInfo.ClearCacheBundleInfo.Mode is ClearCacheOperationMode.ClearBundleFilesByTags)
+                {
+                    clearCacheOptions =
+                        new ClearCacheOptions(packageInfo.ClearCacheBundleInfo.Mode.ToClearCacheMethods(),
+                            packageInfo.ClearCacheBundleInfo.Tags);
+                }
+                else if (packageInfo.ClearCacheBundleInfo.Mode is ClearCacheOperationMode.ClearBundleFilesByLocations)
+                {
+                    clearCacheOptions =
+                        new ClearCacheOptions(packageInfo.ClearCacheBundleInfo.Mode.ToClearCacheMethods(),
+                            packageInfo.ClearCacheBundleInfo.Locations);
+                }
+                else
+                {
+                    clearCacheOptions =
+                        new ClearCacheOptions(packageInfo.ClearCacheBundleInfo.Mode.ToClearCacheMethods());
+                }
+                
                 var operation = new DefaultClearCacheBundleOperation();
 
-                var clearCacheOperation = operation.YooAssetClearCacheOperation(YooAssets.GetPackage(packageInfo.PackageName),
-                    new ClearCacheOptions(ClearCacheMethods.ClearUnusedBundleFiles));
+                var clearCacheOperation = operation.YooAssetClearCacheOperation(
+                    YooAssets.GetPackage(packageInfo.PackageName),
+                    clearCacheOptions);
                 
                 await clearCacheOperation;
                 if(clearCacheOperation.Status == EOperationStatus.Succeeded)
@@ -29,9 +49,9 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
                 }
                 else
                 {
-                   Owner._patchError?.Invoke(clearCacheOperation.Error);
+                    _owner._patchError?.Invoke(clearCacheOperation.Error);
                 }
-                Owner._patchCompleted();
+                _owner._patchCompleted();
             }
         }
     }

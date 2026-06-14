@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using YooAsset;
 
-namespace Dories.YooassetSystem.Patch.Runtime.Operations
+namespace Dories.YooAssetSystem.Patch.Runtime.Operations
 {
     public class WeakOnlineRequestPackageVersionOperation : IYooAssetRequestPackageVersionOperation
     {

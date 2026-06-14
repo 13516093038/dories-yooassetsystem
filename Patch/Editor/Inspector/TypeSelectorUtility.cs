@@ -50,7 +50,7 @@ public static class TypeSelectorUtility
         if (allowNone)
             stringProp.stringValue = newIndex <= 0 ? string.Empty : types[newIndex - 1].Name;
         else if (types.Count > 0)
-            stringProp.stringValue = types[newIndex].Name;
+            stringProp.stringValue = types[newIndex].FullName;
 
         // 未选择且必填 → 红色错误提示框
         bool isMissing = required && string.IsNullOrEmpty(stringProp.stringValue);

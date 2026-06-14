@@ -1,6 +1,6 @@
 using YooAsset;
 
-namespace Dories.YooassetSystem.Patch.Runtime.Operations
+namespace Dories.YooAssetSystem.Patch.Runtime.Operations
 {
     /// <summary>
     /// 离线模式初始化操作
@@ -8,7 +8,7 @@ namespace Dories.YooassetSystem.Patch.Runtime.Operations
     public class OfflineInitOperation : IYooAssetInitOperation
     {
         public InitializePackageOperation Initialize(ResourcePackage package, IRemoteService remoteServices,
-            IBundleDecryptor bundleDecryptor = null, IManifestDecryptor manifestDecryptor = null)
+            IBundleDecryptor bundleDecryptor = null)
         {
             var builtinFileSystemParams = FileSystemParameters.CreateDefaultBuiltinFileSystemParameters();
 
@@ -18,11 +18,6 @@ namespace Dories.YooassetSystem.Patch.Runtime.Operations
             if (bundleDecryptor != null)
             {
                 builtinFileSystemParams.AddParameter(EFileSystemParameter.AssetBundleDecryptor, bundleDecryptor);
-            }
-
-            if (manifestDecryptor != null)
-            {
-                builtinFileSystemParams.AddParameter(EFileSystemParameter.ManifestDecryptor, manifestDecryptor);
             }
 
             return package.InitializePackageAsync(createParameters);

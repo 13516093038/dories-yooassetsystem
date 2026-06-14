@@ -1,23 +1,21 @@
-using Dories.Fsm.Runtime;
+using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
 using UnityEngine;
 
-namespace Dories.YooassetSystem.Runtime.Patch.States
+namespace Dories.YooAssetSystem.Runtime.Patch.States
 {
-    public class YooAssetDownloadFileOverState : FsmState<PatchEntity>
+    public class YooAssetDownloadFileOverState : FsmNodeEntity<PatchEntity>
     {
-        protected override void OnEnter(Fsm<PatchEntity> fsm)
+        protected internal override void OnEnter()
         {
-            base.OnEnter(fsm);
-
-            foreach (var packageInfo in Owner.packagesInfoList)
+            foreach (var packageInfo in _owner.packagesInfoList)
             {
                 PlayerPrefs.SetString($"{packageInfo.PackageName}_GAME_VERSION",
                     packageInfo.PackageVersion);
-                Debug.Log(
+                _logger.Info(
                     $"Update local package version success. [{packageInfo.PackageName}_GAME_VERSION]: <{packageInfo.PackageVersion}>");
             }
 
-            ChangeState<YooAssetClearCacheBundleState>(fsm);
+            ChangeState<YooAssetClearCacheBundleState>();
         }
     }
 }

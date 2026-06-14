@@ -1,25 +1,20 @@
 using System.Threading.Tasks;
-using Dories.Fsm.Runtime;
-using Dories.YooassetSystem.Patch.Runtime.Operations;
+using Dories.YooAssetSystem.Patch.Runtime.Operations;
+using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
 using YooAsset;
 
-namespace Dories.YooassetSystem.Runtime.Patch.States
+namespace Dories.YooAssetSystem.Runtime.Patch.States
 {
-    public class YooAssetRequestPackageVersionState : FsmState<PatchEntity>
+    public class YooAssetRequestPackageVersionState : FsmNodeEntity<PatchEntity>
     {
-        private Fsm<PatchEntity> m_Fsm;
-        
-        protected override void OnEnter(Fsm<PatchEntity> fsm)
+        protected internal override void OnEnter()
         {
-            base.OnEnter(fsm);
-            
-            m_Fsm = fsm;
             _ = RequestPackageVersionTask();
         }
 
         private async Task RequestPackageVersionTask()
         {
-            foreach (var packageInfo in Owner.packagesInfoList)
+            foreach (var packageInfo in _owner.packagesInfoList)
             {
                 var package = YooAssets.GetPackage(packageInfo.PackageName);
                 string version = string.Empty;
@@ -34,15 +29,15 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
 
                 if(string.IsNullOrEmpty(version))
                 {
-                    Owner._patchFailed?.Invoke("Request package version failed");
-                    Owner._patchError?.Invoke("Request package version failed");
+                    _owner._patchFailed?.Invoke("Request package version failed");
+                    _owner._patchError?.Invoke("Request package version failed");
                     return;
                 }
 
                 packageInfo.PackageVersion = version;
             }
            
-            ChangeState<YooAssetUpdatePackageManifestState>(m_Fsm);
+            ChangeState<YooAssetUpdatePackageManifestState>();
         }
     }
 }

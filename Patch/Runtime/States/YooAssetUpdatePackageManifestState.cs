@@ -1,39 +1,36 @@
 using System.Threading.Tasks;
 using Dories.Fsm.Runtime;
-using Dories.YooassetSystem.Patch.Runtime.Operations;
+using Dories.YooAssetSystem.Patch.Runtime.Operations;
+using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
 using YooAsset;
 
-namespace Dories.YooassetSystem.Runtime.Patch.States
+namespace Dories.YooAssetSystem.Runtime.Patch.States
 {
-    public class YooAssetUpdatePackageManifestState : FsmState<PatchEntity>
+    public class YooAssetUpdatePackageManifestState : FsmNodeEntity<PatchEntity>
     {
         private Fsm<PatchEntity> m_Fsm;
 
-        protected override void OnEnter(Fsm<PatchEntity> fsm)
+        protected internal override void OnEnter()
         {
-            base.OnEnter(fsm);
-
-            m_Fsm = fsm;
             _ = UpdatePackageManifestTask();
         }
 
         private async Task UpdatePackageManifestTask()
         {
-            foreach (var packageInfo in Owner.packagesInfoList)
+            foreach (var packageInfo in _owner.packagesInfoList)
             {
-
                 var operation = new DefaultUpdatePackageManifestOperation().UpdatePackageManifest(
                     YooAssets.GetPackage(packageInfo.PackageName), packageInfo.PackageVersion, packageInfo.Timeout);
                 await operation;
                 if (operation.Status != EOperationStatus.Succeeded)
                 {
-                    Owner._patchFailed?.Invoke(operation.Error);
-                    Owner._patchError?.Invoke(operation.Error);
+                    _owner._patchFailed?.Invoke(operation.Error);
+                    _owner._patchError?.Invoke(operation.Error);
                     return;
                 }
             }
 
-            ChangeState<YooAssetCreateDownloaderState>(m_Fsm);
+            ChangeState<YooAssetCreateDownloaderState>();
         }
     }
 }

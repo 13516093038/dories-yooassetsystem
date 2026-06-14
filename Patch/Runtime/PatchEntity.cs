@@ -1,15 +1,17 @@
 using System;
 using System.Collections.Generic;
-using Dories.Componentization.Runtime;
 using Dories.Fsm.Runtime;
-using Dories.YooassetSystem.Patch.Runtime.Operations;
+using Dories.YooAssetSystem.Patch.Runtime.Operations;
+using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
+using Dories.YooAssetSystem.Runtime.Patch.LogSystem;
+using Dories.YooAssetSystem.Runtime.Patch.States;
 using UnityEngine;
 using YooAsset;
 
 
-namespace Dories.YooassetSystem.Runtime.Patch
+namespace Dories.YooAssetSystem.Runtime.Patch
 {
-    public class PatchEntity : EntityMono
+    public class PatchEntity : MonoBehaviour
     {
         [Serializable]
         public class PackageInfo
@@ -32,10 +34,7 @@ namespace Dories.YooassetSystem.Runtime.Patch
             public int DownloadingMaxNum => downloadingMaxNum;
             public int FailedTryAgain => failedTryAgainTimes;
             public ClearCacheBundleInfo ClearCacheBundleInfo => clearCacheBundleInfo;
-
-            /// <summary>
-            /// 运行时实例，由 Awake 根据类型名创建
-            /// </summary>
+            
             public IRemoteService RemoteService { get; internal set; }
 
             public IBundleDecryptor BundleDecryptor { get; internal set; }
@@ -53,14 +52,13 @@ namespace Dories.YooassetSystem.Runtime.Patch
             public string[] Tags => tags;
         }
 
+        [SerializeField] internal string iLog;
         [SerializeField] internal bool isReleaseMode;
         [SerializeField] internal PlayMode playMode;
-        [SerializeField] private string manifestDecryptor;
 
         [SerializeField, Header("AppPackagesInfo")]
         internal List<PackageInfo> packagesInfoList;
-
-        internal IManifestDecryptor ManifestDecryptor { get; private set; }
+        
         internal Dictionary<string, ResourceDownloaderOperation> m_Downloaders;
         internal Action<PatchDownlaoder> _needUpdateListener;
         internal PatchDownlaoder _patchDowner;
@@ -68,14 +66,12 @@ namespace Dories.YooassetSystem.Runtime.Patch
         internal Action<string> _patchFailed;
         internal Action<string> _patchError;
 
-        private Fsm<PatchEntity> _fsm;
+        private ILog _logger;
+        private FsmSystem<PatchEntity> _fsmSystem;
 
         private void Awake()
         {
-            var fsmEntity = AddComponent<FsmEntity>();
-            _fsm = fsmEntity.CreateFsm(this);
-
-            ManifestDecryptor = CreateManifestDecryptor(manifestDecryptor);
+            _logger = CreateLog(iLog);
 
             foreach (var packageInfo in packagesInfoList)
             {
@@ -84,10 +80,21 @@ namespace Dories.YooassetSystem.Runtime.Patch
             }
         }
 
-        protected override void OnDestroy()
+        private ILog CreateLog(string log)
         {
-            GetComponentCSharp<FsmEntity>().DestroyFsm(_fsm);
-            base.OnDestroy();
+            if (!string.IsNullOrEmpty(log))
+            {
+                try
+                {
+                    return Activator.CreateInstance(Type.GetType(log)) as ILog;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Create logger failed: {e}, Type name: {log}");
+                }
+            }
+
+            return new BuildInLogEntity();
         }
 
         private IRemoteService CreateRemoteService(string remoteServiceTypeName)
@@ -100,7 +107,7 @@ namespace Dories.YooassetSystem.Runtime.Patch
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"CreateRemoteService failed: {e}");
+                    _logger.Error($"CreateRemoteService failed: {e}, Type name: {remoteServiceTypeName}");
                 }
             }
 
@@ -117,28 +124,50 @@ namespace Dories.YooassetSystem.Runtime.Patch
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"CreateBundleDecryptor failed: {e}");
+                    _logger.Error($"CreateBundleDecryptor failed: {e},  Type name: {bundleDecryptorTypeName}");
                 }
             }
 
             return null;
         }
 
-        private IManifestDecryptor CreateManifestDecryptor(string manifestDecryptorTypeName)
+        public PatchEntity BuildNeedUpdateListener(Action<PatchDownlaoder> listener)
         {
-            if (!string.IsNullOrEmpty(manifestDecryptorTypeName))
-            {
-                try
-                {
-                    return Activator.CreateInstance(Type.GetType(manifestDecryptorTypeName)) as IManifestDecryptor;
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"CreateManifestDecryptor failed: {e}");
-                }
-            }
+            _needUpdateListener = listener;
+            return this;
+        }
 
-            return null;
+        public PatchEntity BuildPatchCompleteListener(Action listener)
+        {
+            _patchCompleted = listener;
+            return this;
+        }
+
+        public PatchEntity BuildPatchFailedListener(Action<string> listener)
+        {
+            _patchFailed = listener;
+            return this;
+        }
+
+        public PatchEntity BuildPatchErrorListener(Action<string> listener)
+        {
+            _patchError = listener;
+            return this;
+        }
+        
+        public void StartPatch()
+        {
+            _fsmSystem = new FsmSystem<PatchEntity>(this, _logger);
+            
+            _fsmSystem.AddNode(new YooAssetInitState());
+            _fsmSystem.AddNode(new YooAssetRequestPackageVersionState());
+            _fsmSystem.AddNode(new YooAssetUpdatePackageManifestState());
+            _fsmSystem.AddNode(new YooAssetCreateDownloaderState());
+            _fsmSystem.AddNode(new YooAssetDownloadPackageFilesState());
+            _fsmSystem.AddNode(new YooAssetDownloadFileOverState());
+            _fsmSystem.AddNode(new YooAssetClearCacheBundleState());
+            
+            _fsmSystem.StartFsm<YooAssetInitState>();
         }
     }
 }
