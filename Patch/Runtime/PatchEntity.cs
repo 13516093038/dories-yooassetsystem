@@ -2,16 +2,13 @@ using System;
 using System.Collections.Generic;
 using Dories.Componentization.Runtime;
 using Dories.Fsm.Runtime;
+using Dories.YooassetSystem.Patch.Runtime.Operations;
 using UnityEngine;
 using YooAsset;
 
 
 namespace Dories.YooassetSystem.Runtime.Patch
 {
-    public delegate void OnPatchSuccess();
-
-    public delegate void OnPatchFail(string errorMsg);
-
     public class PatchEntity : EntityMono
     {
         [Serializable]
@@ -22,6 +19,9 @@ namespace Dories.YooassetSystem.Runtime.Patch
             [SerializeField] private string remoteService = string.Empty;
             [SerializeField] private string bundleDecryptor = string.Empty;
             [SerializeField] private int timeout = 60;
+            [SerializeField] private int downloadingMaxNum = 10;
+            [SerializeField] private int failedTryAgainTimes = 3;
+            [SerializeField] private ClearCacheBundleInfo clearCacheBundleInfo;
 
             public string PackageName => packageName;
             public bool IsSupportWeakOnline => isSupportWeakOnline;
@@ -29,6 +29,9 @@ namespace Dories.YooassetSystem.Runtime.Patch
             public string BundleDecryptorTypeName => bundleDecryptor;
             public int Timeout => timeout;
             public string PackageVersion { get; internal set; }
+            public int DownloadingMaxNum => downloadingMaxNum;
+            public int FailedTryAgain => failedTryAgainTimes;
+            public ClearCacheBundleInfo ClearCacheBundleInfo => clearCacheBundleInfo;
 
             /// <summary>
             /// 运行时实例，由 Awake 根据类型名创建
@@ -36,6 +39,18 @@ namespace Dories.YooassetSystem.Runtime.Patch
             public IRemoteService RemoteService { get; internal set; }
 
             public IBundleDecryptor BundleDecryptor { get; internal set; }
+        }
+
+        [Serializable]
+        public class ClearCacheBundleInfo
+        {
+            [SerializeField] private ClearCacheOperationMode mode = ClearCacheOperationMode.ClearUnusedBundleFiles;
+            [SerializeField] private string[] locations;
+            [SerializeField] private string[] tags;
+
+            public ClearCacheOperationMode Mode => mode;
+            public string[] Locations => locations;
+            public string[] Tags => tags;
         }
 
         [SerializeField] internal bool isReleaseMode;
@@ -46,10 +61,12 @@ namespace Dories.YooassetSystem.Runtime.Patch
         internal List<PackageInfo> packagesInfoList;
 
         internal IManifestDecryptor ManifestDecryptor { get; private set; }
-
         internal Dictionary<string, ResourceDownloaderOperation> m_Downloaders;
-        internal OnPatchSuccess m_OnPatchSuccess;
-        internal OnPatchFail m_OnPatchFail;
+        internal Action<PatchDownlaoder> _needUpdateListener;
+        internal PatchDownlaoder _patchDowner;
+        internal Action _patchCompleted;
+        internal Action<string> _patchFailed;
+        internal Action<string> _patchError;
 
         private Fsm<PatchEntity> _fsm;
 
@@ -69,7 +86,7 @@ namespace Dories.YooassetSystem.Runtime.Patch
 
         protected override void OnDestroy()
         {
-            GetComponent<FsmEntity>().DestroyFsm(_fsm);
+            GetComponentCSharp<FsmEntity>().DestroyFsm(_fsm);
             base.OnDestroy();
         }
 

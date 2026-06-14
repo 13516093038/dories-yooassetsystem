@@ -34,7 +34,8 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
 
                 if(string.IsNullOrEmpty(version))
                 {
-                    Owner.m_OnPatchFail?.Invoke("Request package version failed");
+                    Owner._patchFailed?.Invoke("Request package version failed");
+                    Owner._patchError?.Invoke("Request package version failed");
                     return;
                 }
 

@@ -13,12 +13,12 @@ namespace Dories.YooassetSystem.Patch.Runtime.Operations
 
             if (operation.Status == EOperationStatus.Succeeded)
             {
-                PlayerPrefs.SetString(package.PackageName + "_VERSION", operation.PackageVersion);
+                PlayerPrefs.SetString(package.PackageName + "_GAME_VERSION", operation.PackageVersion);
                 return operation.PackageVersion;
             }
             else
             {
-                return PlayerPrefs.GetString(package.PackageName + "_VERSION", string.Empty);
+                return PlayerPrefs.GetString(package.PackageName + "_GAME_VERSION", string.Empty);
             }
         }
     }

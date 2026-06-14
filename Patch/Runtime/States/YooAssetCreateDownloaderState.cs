@@ -1,4 +1,7 @@
+using System.Collections.Generic;
 using Dories.Fsm.Runtime;
+using Dories.YooassetSystem.Patch.Runtime.Operations;
+using YooAsset;
 
 namespace Dories.YooassetSystem.Runtime.Patch.States
 {
@@ -16,19 +19,28 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
 
         private void CreateDownloaderTask()
         {
-            foreach (var packageName in Owner.packagesNameList)
+            var createDownloaderOperation = new DefaultCreateDownloaderOperation();
+
+            foreach (var packageInfo in Owner.packagesInfoList)
             {
                 if (Owner.m_Downloaders == null)
                 {
                     Owner.m_Downloaders = new();
                 }
-                Owner.m_Downloaders.Add(packageName, Owner.m_CreateDownloaderOperation.CreateDownloader(Owner.m_PackageInfoDic[packageName].Package));
+
+                var package = YooAssets.GetPackage(packageInfo.PackageName);
+                Owner.m_Downloaders.Add(packageInfo.PackageName,
+                    createDownloaderOperation.CreateDownloader(package, packageInfo.DownloadingMaxNum,
+                        packageInfo.FailedTryAgain));
             }
 
             int totalDownloadCount = 0;
+            List<string> packageNames = new List<string>();
+
             foreach (var packageName in Owner.m_Downloaders)
             {
                 totalDownloadCount +=  packageName.Value.TotalDownloadCount;
+                packageNames.Add(packageName.Key);
             }
             
             if ( totalDownloadCount == 0)
@@ -38,13 +50,11 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
             }
             else
             {
-                var onNeedUpdateCallback = Owner.m_CreateDownloaderOperation.GetOnNeedUpdateCallback();
-                onNeedUpdateCallback?.Invoke(totalDownloadCount, () =>
-                {
-                    //转换到下载资源状态
-                    ChangeState<YooAssetDownloadPackageFilesState>(m_Fsm);
-                });
-            }
+                var patchDowner = new PatchDownlaoder(packageNames);
+                Owner._patchDowner = patchDowner;
+                Owner._needUpdateListener?.Invoke(patchDowner);
+                ChangeState<YooAssetDownloadPackageFilesState>(m_Fsm);
+            }   
         }
     }
 }

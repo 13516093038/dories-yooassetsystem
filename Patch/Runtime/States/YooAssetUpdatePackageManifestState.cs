@@ -27,7 +27,8 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
                 await operation;
                 if (operation.Status != EOperationStatus.Succeeded)
                 {
-                    Owner.m_OnPatchFail?.Invoke(operation.Error);
+                    Owner._patchFailed?.Invoke(operation.Error);
+                    Owner._patchError?.Invoke(operation.Error);
                     return;
                 }
             }

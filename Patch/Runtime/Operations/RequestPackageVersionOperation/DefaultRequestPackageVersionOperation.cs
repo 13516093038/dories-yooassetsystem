@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using UnityEngine;
 using YooAsset;
 
 namespace Dories.YooassetSystem.Patch.Runtime.Operations
@@ -16,6 +15,7 @@ namespace Dories.YooassetSystem.Patch.Runtime.Operations
                 PlayerPrefs.SetString(package.PackageName + "_VERSION", operation.PackageVersion);
                 return operation.PackageVersion;
             }
+
             return string.Empty;
         }
     }

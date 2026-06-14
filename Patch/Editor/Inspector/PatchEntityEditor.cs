@@ -124,6 +124,10 @@
                          "Bundle Decryptor"
                      );
 
+                     EditorGUILayout.Space(2);
+
+                     
+
                      EditorGUI.indentLevel--;
                  }
 
@@ -142,6 +146,20 @@
                  "Manifest Decryptor",
                  false
              );
+         }
+
+         private void DrawClearCacheBundleInfo()
+         {
+             EditorGUILayout.LabelField("Clear Cache Bundle Info", EditorStyles.boldLabel);
+             EditorGUILayout.PropertyField(_clearCacheBundleInfoModeProp);
+             if (_clearCacheBundleInfoModeProp.isExpanded)
+             {
+                 EditorGUI.indentLevel++;
+                 EditorGUILayout.PropertyField(_clearCacheBundleInfoModeProp.FindPropertyRelative("mode"));
+                 EditorGUILayout.PropertyField(_clearCacheBundleInfoModeProp.FindPropertyRelative("locations"));
+                 EditorGUILayout.PropertyField(_clearCacheBundleInfoModeProp.FindPropertyRelative("tags"));
+                 EditorGUI.indentLevel--;
+             }
          }
      }
  }

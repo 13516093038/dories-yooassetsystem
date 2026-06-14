@@ -55,7 +55,8 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
 
                 if (initOperation == null)
                 {
-                    Owner.m_OnPatchFail?.Invoke($"未支持的 PlayMode: {Owner.playMode}");
+                    Owner._patchError?.Invoke($"未支持的 PlayMode: {Owner.playMode}");
+                    Owner._patchFailed?.Invoke($"未支持的 PlayMode: {Owner.playMode}");
                     return;
                 }
 
@@ -68,7 +69,8 @@ namespace Dories.YooassetSystem.Runtime.Patch.States
 
                 if (operation.Status != EOperationStatus.Succeeded)
                 {
-                    Owner.m_OnPatchFail?.Invoke(operation.Error);
+                    Owner._patchFailed?.Invoke(operation.Error);
+                    Owner._patchError?.Invoke(operation.Error);
                     return;
                 }
             }

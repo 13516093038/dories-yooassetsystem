@@ -1,12 +1,9 @@
-using System;
 using YooAsset;
 
-namespace Dories.YooassetSystem.Runtime.Patch.Operations.CreateDownloaderOperation
+namespace Dories.YooassetSystem.Patch.Runtime.Operations
 {
     public interface IYooAssetCreateDownloaderOperation
     {
-        ResourceDownloaderOperation CreateDownloader(ResourcePackage package);
-
-        Action<int ,Action> GetOnNeedUpdateCallback();
+        ResourceDownloaderOperation CreateDownloader(ResourcePackage package, int downloadingMaxNum, int failedTryAgain);
     }
 }
