@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Dories.Fsm.Runtime;
 using Dories.YooAssetSystem.Patch.Runtime.Operations;
 using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
 using YooAsset;
@@ -8,8 +7,6 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
 {
     public class YooAssetCreateDownloaderState : FsmNodeEntity<PatchEntity>
     {
-        private Fsm<PatchEntity> m_Fsm;
-        
         protected internal override void OnEnter()
         {
             CreateDownloaderTask();

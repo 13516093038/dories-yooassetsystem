@@ -2,12 +2,8 @@
     "name": "Dories.YooassetSystem.Patch.Runtime",
     "rootNamespace": "Dories.YooassetSystem.Runtime.Patch",
     "references": [
-        "Dories.YooassetSystem.Patch.YooAssetExtensions",
-        "Dories.Componentization.Runtime",
-        "Dories.Fsm.Runtime",
-        "Dories.Reference.Runtime",
-        "Dories.YooassetSystem.AssetLoader.Runtime",
-        "YooAsset"
+        "YooAsset",
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -16,6 +12,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.cysharp.unitask",
+            "expression": "",
+            "define": "DORIES_UNITASK_SUPPORT"
+        }
+    ],
     "noEngineReferences": false
 }

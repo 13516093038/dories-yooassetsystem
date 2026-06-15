@@ -19,7 +19,7 @@ namespace Dories.YooAssetSystem.Patch.Runtime.Operations
             var createParameters = new WebPlayModeOptions();
 
 #if UNITY_WEBGL && !UNITY_EDITOR && (WEIXINMINIGAME || UNITY_WECHATMINIGAME)
-            ApplyWeChatPlatformOptions(createParameters, remoteServices, bundleDecryptor, manifestDecryptor);
+            ApplyWeChatPlatformOptions(createParameters, remoteServices, bundleDecryptor);
 #else
             // 未安装微信插件或在 Editor 中调试时，回退到普通 Web 模式
             WebPlayModeInitHelper.ApplyDefaultWebOptions(

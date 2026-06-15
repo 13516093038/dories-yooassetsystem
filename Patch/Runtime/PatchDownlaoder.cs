@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
+#if DORIES_UNITASK_SUPPORT
+using Cysharp.Threading.Tasks;
+#else
 using System.Threading.Tasks;
+#endif
 using UnityEngine;
 using YooAsset;
 
@@ -94,7 +98,11 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             _ = DownloadTask();
         }
 
+#if DORIES_UNITASK_SUPPORT
+        private async UniTask DownloadTask()
+#else
         private async Task DownloadTask()
+#endif
         {
             foreach (var downloaderName in _packageNames)
             {

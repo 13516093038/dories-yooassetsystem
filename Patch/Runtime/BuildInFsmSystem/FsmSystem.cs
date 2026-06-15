@@ -38,6 +38,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem
             
             if (_nodeDict.TryGetValue(typeof(TK), out FsmNodeEntity<T> node))
             {
+                _curNode = node;
                 node.OnEnter();
             }
             else

@@ -1,0 +1,16 @@
+{
+    "name": "Dories.YooassetSystem.Patch.Test",
+    "rootNamespace": "",
+    "references": [
+        "GUID:b4790d316a1c349c4993e6dc60c5b1e9"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

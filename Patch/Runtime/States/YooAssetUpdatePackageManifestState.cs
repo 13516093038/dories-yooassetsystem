@@ -1,5 +1,8 @@
+#if DORIES_UNITASK_SUPPORT
+using Cysharp.Threading.Tasks;
+#else
 using System.Threading.Tasks;
-using Dories.Fsm.Runtime;
+#endif
 using Dories.YooAssetSystem.Patch.Runtime.Operations;
 using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
 using YooAsset;
@@ -8,14 +11,16 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
 {
     public class YooAssetUpdatePackageManifestState : FsmNodeEntity<PatchEntity>
     {
-        private Fsm<PatchEntity> m_Fsm;
-
         protected internal override void OnEnter()
         {
             _ = UpdatePackageManifestTask();
         }
 
+#if DORIES_UNITASK_SUPPORT
+        private async UniTask UpdatePackageManifestTask()
+#else
         private async Task UpdatePackageManifestTask()
+#endif
         {
             foreach (var packageInfo in _owner.packagesInfoList)
             {

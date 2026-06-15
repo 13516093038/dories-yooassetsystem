@@ -1,5 +1,9 @@
+using System;
+#if DORIES_UNITASK_SUPPORT
+using Cysharp.Threading.Tasks;
+#else
 using System.Threading.Tasks;
-using Dories.Fsm.Runtime;
+#endif
 using Dories.YooAssetSystem.Patch.Runtime.Operations;
 using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
 using UnityEngine;
@@ -9,20 +13,32 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
 {
     public class YooAssetInitState : FsmNodeEntity<PatchEntity>
     {
-        private Fsm<PatchEntity> m_Fsm;
-
         protected internal override void OnEnter()
         {
             _ = InitTask();
         }
 
+#if DORIES_UNITASK_SUPPORT
+        private async UniTask InitTask()
+#else
         private async Task InitTask()
+#endif
         {
             // 创建资源包裹类
             YooAssets.Initialize();
             foreach (var packageInfo in _owner.packagesInfoList)
             {
-                var package = YooAssets.GetPackage(packageInfo.PackageName) ?? YooAssets.CreatePackage(packageInfo.PackageName);
+                ResourcePackage package;
+
+                try
+                {
+                    package = YooAssets.GetPackage(packageInfo.PackageName);
+                }
+                catch (InvalidOperationException)
+                {
+                    package = YooAssets.CreatePackage(packageInfo.PackageName);
+                }
+
                 IYooAssetInitOperation initOperation = null;
 
                 if (Application.isEditor && !_owner.isReleaseMode)
