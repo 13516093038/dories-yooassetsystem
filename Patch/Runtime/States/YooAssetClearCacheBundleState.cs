@@ -25,41 +25,53 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
             foreach (var packageInfo in _owner.packagesInfoList)
             {
                 ClearCacheOptions clearCacheOptions;
-
-                if (packageInfo.ClearCacheBundleInfo.Mode is ClearCacheOperationMode.ClearBundleFilesByTags)
+                var clearCacheInfo = packageInfo.ClearCacheBundleInfo;
+                if (clearCacheInfo == null)
                 {
-                    clearCacheOptions =
-                        new ClearCacheOptions(packageInfo.ClearCacheBundleInfo.Mode.ToClearCacheMethods(),
-                            packageInfo.ClearCacheBundleInfo.Tags);
+                    clearCacheOptions = new ClearCacheOptions(ClearCacheOperationMode.ClearUnusedBundleFiles.ToClearCacheMethods());
+                    await ExecuteClearCache(packageInfo.PackageName, clearCacheOptions);
+                    continue;
                 }
-                else if (packageInfo.ClearCacheBundleInfo.Mode is ClearCacheOperationMode.ClearBundleFilesByLocations)
+
+                if (clearCacheInfo.Mode is ClearCacheOperationMode.ClearBundleFilesByTags)
                 {
                     clearCacheOptions =
-                        new ClearCacheOptions(packageInfo.ClearCacheBundleInfo.Mode.ToClearCacheMethods(),
-                            packageInfo.ClearCacheBundleInfo.Locations);
+                        new ClearCacheOptions(clearCacheInfo.Mode.ToClearCacheMethods(),
+                            clearCacheInfo.Tags);
+                }
+                else if (clearCacheInfo.Mode is ClearCacheOperationMode.ClearBundleFilesByLocations)
+                {
+                    clearCacheOptions =
+                        new ClearCacheOptions(clearCacheInfo.Mode.ToClearCacheMethods(),
+                            clearCacheInfo.Locations);
                 }
                 else
                 {
                     clearCacheOptions =
-                        new ClearCacheOptions(packageInfo.ClearCacheBundleInfo.Mode.ToClearCacheMethods());
+                        new ClearCacheOptions(clearCacheInfo.Mode.ToClearCacheMethods());
                 }
-                
-                var operation = new DefaultClearCacheBundleOperation();
 
-                var clearCacheOperation = operation.YooAssetClearCacheOperation(
-                    YooAssets.GetPackage(packageInfo.PackageName),
-                    clearCacheOptions);
-                
-                await clearCacheOperation;
-                if(clearCacheOperation.Status == EOperationStatus.Succeeded)
-                {
-                    //清理成功
-                }
-                else
-                {
-                    _owner._patchError?.Invoke(clearCacheOperation.Error);
-                }
-                _owner._patchCompleted();
+                await ExecuteClearCache(packageInfo.PackageName, clearCacheOptions);
+            }
+
+            _owner._patchCompleted?.Invoke();
+        }
+
+#if DORIES_UNITASK_SUPPORT
+        private async UniTask ExecuteClearCache(string packageName, ClearCacheOptions clearCacheOptions)
+#else
+        private async Task ExecuteClearCache(string packageName, ClearCacheOptions clearCacheOptions)
+#endif
+        {
+            var operation = new DefaultClearCacheBundleOperation();
+            var clearCacheOperation = operation.YooAssetClearCacheOperation(
+                YooAssets.GetPackage(packageName),
+                clearCacheOptions);
+
+            await clearCacheOperation;
+            if (clearCacheOperation.Status != EOperationStatus.Succeeded)
+            {
+                _owner._patchError?.Invoke(clearCacheOperation.Error);
             }
         }
     }

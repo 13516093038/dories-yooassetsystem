@@ -10,6 +10,11 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
         protected internal override void OnEnter()
         {
             _owner._patchDowner._allPackageDownloadCompleted = ChangeState<YooAssetDownloadFileOverState>;
+            _owner._patchDowner._onDownloadFailed = error =>
+            {
+                _owner._patchFailed?.Invoke(error);
+                _owner._patchError?.Invoke(error);
+            };
         }
     }
 }

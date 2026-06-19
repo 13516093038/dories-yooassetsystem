@@ -41,14 +41,14 @@ public static class TypeSelectorUtility
         int currentIndex = 0;
         if (!string.IsNullOrEmpty(stringProp.stringValue))
         {
-            int idx = types.FindIndex(t => t.Name == stringProp.stringValue);
+            int idx = types.FindIndex(t => t.FullName == stringProp.stringValue);
             currentIndex = allowNone ? (idx >= 0 ? idx + 1 : 0) : Mathf.Max(idx, 0);
         }
 
         int newIndex = EditorGUILayout.Popup(label, currentIndex, options.ToArray());
 
         if (allowNone)
-            stringProp.stringValue = newIndex <= 0 ? string.Empty : types[newIndex - 1].Name;
+            stringProp.stringValue = newIndex <= 0 ? string.Empty : types[newIndex - 1].FullName;
         else if (types.Count > 0)
             stringProp.stringValue = types[newIndex].FullName;
 

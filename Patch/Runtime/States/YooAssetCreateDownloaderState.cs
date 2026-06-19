@@ -1,7 +1,5 @@
 using System.Collections.Generic;
-using Dories.YooAssetSystem.Patch.Runtime.Operations;
 using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
-using YooAsset;
 
 namespace Dories.YooAssetSystem.Runtime.Patch.States
 {
@@ -14,42 +12,35 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
 
         private void CreateDownloaderTask()
         {
-            var createDownloaderOperation = new DefaultCreateDownloaderOperation();
+            var packageNames = new List<string>();
 
             foreach (var packageInfo in _owner.packagesInfoList)
             {
-                if (_owner.m_Downloaders == null)
-                {
-                    _owner.m_Downloaders = new();
-                }
-
-                var package = YooAssets.GetPackage(packageInfo.PackageName);
-                _owner.m_Downloaders.Add(packageInfo.PackageName,
-                    createDownloaderOperation.CreateDownloader(package, packageInfo.DownloadingMaxNum,
-                        packageInfo.FailedTryAgain));
+                packageNames.Add(packageInfo.PackageName);
             }
 
-            int totalDownloadCount = 0;
-            List<string> packageNames = new List<string>();
+            var patchDowner = new PatchDownlaoder(packageNames);
 
-            foreach (var packageName in _owner.m_Downloaders)
+            foreach (var packageInfo in _owner.packagesInfoList)
             {
-                totalDownloadCount +=  packageName.Value.TotalDownloadCount;
-                packageNames.Add(packageName.Key);
+                patchDowner.DownloadAll(
+                    packageInfo.PackageName,
+                    packageInfo.DownloadingMaxNum,
+                    packageInfo.FailedTryAgain);
             }
-            
-            if ( totalDownloadCount == 0)
+
+            var (totalCount, _) = patchDowner.GetTotalPendingDownload();
+            patchDowner.NeedDownload = totalCount > 0;
+
+            if (totalCount == 0)
             {
-                //无需下载
                 ChangeState<YooAssetDownloadFileOverState>();
+                return;
             }
-            else
-            {
-                var patchDowner = new PatchDownlaoder(packageNames);
-                _owner._patchDowner = patchDowner;
-                _owner._needUpdateListener?.Invoke(patchDowner);
-                ChangeState<YooAssetDownloadPackageFilesState>();
-            }   
+
+            _owner._patchDowner = patchDowner;
+            ChangeState<YooAssetDownloadPackageFilesState>();
+            _owner._needUpdateListener?.Invoke(patchDowner);
         }
     }
 }

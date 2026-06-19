@@ -11,14 +11,19 @@ namespace Dories.YooAssetSystem.Patch.Runtime.Operations
             IBundleDecryptor bundleDecryptor = null)
         {
             var cacheFileSystemParams = FileSystemParameters.CreateDefaultSandboxFileSystemParameters(remoteServices);
+            cacheFileSystemParams.AddParameter(EFileSystemParameter.InstallCleanupMode, EInstallCleanupMode.None);
+            
             var builtinFileSystemParams = FileSystemParameters.CreateDefaultBuiltinFileSystemParameters();
-
+            builtinFileSystemParams.AddParameter(EFileSystemParameter.CopyBuiltinPackageManifest, true);
+        
             if (bundleDecryptor != null)
             {
                 builtinFileSystemParams.AddParameter(EFileSystemParameter.AssetBundleDecryptor, bundleDecryptor);
+                cacheFileSystemParams.AddParameter(EFileSystemParameter.AssetBundleDecryptor, bundleDecryptor);
             }
 
             var createParameters = new HostPlayModeOptions();
+            
             createParameters.BuiltinFileSystemParameters = builtinFileSystemParams;
             createParameters.CacheFileSystemParameters = cacheFileSystemParams;
 

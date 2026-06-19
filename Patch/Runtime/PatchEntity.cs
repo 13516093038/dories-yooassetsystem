@@ -22,7 +22,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             [SerializeField] private int timeout = 60;
             [SerializeField] private int downloadingMaxNum = 10;
             [SerializeField] private int failedTryAgainTimes = 3;
-            [SerializeField] private ClearCacheBundleInfo clearCacheBundleInfo;
+        [SerializeField] private ClearCacheBundleInfo clearCacheBundleInfo = new ClearCacheBundleInfo();
 
             public string PackageName => packageName;
             public bool IsSupportWeakOnline => isSupportWeakOnline;
@@ -57,8 +57,12 @@ namespace Dories.YooAssetSystem.Runtime.Patch
 
         [SerializeField, Header("AppPackagesInfo")]
         internal List<PackageInfo> packagesInfoList;
+
+        /// <summary>
+        /// 只读访问已配置的 Package 列表
+        /// </summary>
+        public IReadOnlyList<PackageInfo> PackagesInfoList => packagesInfoList;
         
-        internal Dictionary<string, ResourceDownloaderOperation> m_Downloaders;
         internal Action<PatchDownlaoder> _needUpdateListener;
         internal PatchDownlaoder _patchDowner;
         internal Action _patchCompleted;
@@ -79,13 +83,34 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             }
         }
 
+        private static Type ResolveType(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return null;
+
+            var type = Type.GetType(typeName);
+            if (type != null)
+                return type;
+
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                type = assembly.GetType(typeName);
+                if (type != null)
+                    return type;
+            }
+
+            return null;
+        }
+
         private ILog CreateLog(string log)
         {
             if (!string.IsNullOrEmpty(log))
             {
                 try
                 {
-                    return Activator.CreateInstance(Type.GetType(log)) as ILog;
+                    var type = ResolveType(log);
+                    if (type != null)
+                        return Activator.CreateInstance(type) as ILog;
                 }
                 catch (Exception e)
                 {
@@ -102,7 +127,11 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             {
                 try
                 {
-                    return Activator.CreateInstance(Type.GetType(remoteServiceTypeName)) as IRemoteService;
+                    var type = ResolveType(remoteServiceTypeName);
+                    if (type != null)
+                        return Activator.CreateInstance(type) as IRemoteService;
+
+                    _logger.Error($"CreateRemoteService failed: type not found, Type name: {remoteServiceTypeName}");
                 }
                 catch (Exception e)
                 {
@@ -119,7 +148,11 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             {
                 try
                 {
-                    return Activator.CreateInstance(Type.GetType(bundleDecryptorTypeName)) as IBundleDecryptor;
+                    var type = ResolveType(bundleDecryptorTypeName);
+                    if (type != null)
+                        return Activator.CreateInstance(type) as IBundleDecryptor;
+
+                    _logger.Error($"CreateBundleDecryptor failed: type not found, Type name: {bundleDecryptorTypeName}");
                 }
                 catch (Exception e)
                 {
