@@ -20,9 +20,10 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             [SerializeField] private string remoteService = string.Empty;
             [SerializeField] private string bundleDecryptor = string.Empty;
             [SerializeField] private int timeout = 60;
+            [SerializeField] private ClearCacheBundleInfo clearCacheBundleInfo = new ClearCacheBundleInfo();
             [SerializeField] private int downloadingMaxNum = 10;
             [SerializeField] private int failedTryAgainTimes = 3;
-            [SerializeField] private ClearCacheBundleInfo clearCacheBundleInfo = new ClearCacheBundleInfo();
+            [SerializeField] private string[] downloadTags;
 
             public string PackageName => packageName;
             public bool IsSupportWeakOnline => isSupportWeakOnline;
@@ -33,6 +34,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             public int DownloadingMaxNum => downloadingMaxNum;
             public int FailedTryAgain => failedTryAgainTimes;
             public ClearCacheBundleInfo ClearCacheBundleInfo => clearCacheBundleInfo;
+            public string[] DownloadTags => downloadTags;
             
             public IRemoteService RemoteService { get; internal set; }
 
@@ -52,6 +54,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         }
 
         [SerializeField] internal string iLog;
+        [SerializeField] internal bool isAutoDownload = false;
         [SerializeField] internal bool isReleaseMode;
         [SerializeField] internal PlayMode playMode;
 

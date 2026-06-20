@@ -1,10 +1,13 @@
- 
- using Dories.YooAssetSystem.Patch.Runtime.Operations;
+
+using Dories.YooassetSystem.Patch.Editor.Inspector;
+using Dories.YooAssetSystem.Patch.Runtime.Operations;
  using Dories.YooAssetSystem.Runtime.Patch;
  using Dories.YooAssetSystem.Runtime.Patch.LogSystem;
- using UnityEditor;
- using YooAsset;
+using UnityEditor;
+using UnityEngine;
+using YooAsset;
  using YooAsset.Editor;
+ using PlayMode = Dories.YooAssetSystem.Runtime.Patch.PlayMode;
 
  namespace Dories.YooAssetSystem.Patch.Editor.Inspector
  {
@@ -16,8 +19,11 @@
          private SerializedProperty _isReleaseModeProp;
          private SerializedProperty _playModeProp;
          private SerializedProperty _packagesInfoListProp;
+         private SerializedProperty _isAutoDownloadProp;
 
          private const int DefaultTimeout = 60;
+         private const int DefaultDownloadingMaxNum = 10;
+         private const int DefaultFailedTryAgainTimes = 3;
 
          private BundleCollectorSetting GetCollectorSetting()
          {
@@ -30,6 +36,7 @@
              _isReleaseModeProp = serializedObject.FindProperty("isReleaseMode");
              _playModeProp = serializedObject.FindProperty("playMode");
              _packagesInfoListProp = serializedObject.FindProperty("packagesInfoList");
+             _isAutoDownloadProp = serializedObject.FindProperty("isAutoDownload");
          }
 
          public override void OnInspectorGUI()
@@ -45,7 +52,14 @@
          {
              EditorGUILayout.PropertyField(_isReleaseModeProp);
              EditorGUILayout.PropertyField(_playModeProp);
-             
+
+             if ((PlayMode)_playModeProp.enumValueIndex is PlayMode.HostPlayMode or PlayMode.WeChatMiniGameMode
+                 or PlayMode.TTMiniGameMode or PlayMode.WebPlayMode)
+             {
+                 EditorGUILayout.PropertyField(_isAutoDownloadProp,
+                     new GUIContent("Auto Download", "检测到有资源需要更新时，是否自动开始下载；关闭则需由 NeedUpdateListener 手动确认。"));
+             }
+
              TypeSelectorUtility.DrawTypePopup(
                  _logNameProp,
                  typeof(ILog),
@@ -71,6 +85,8 @@
              {
                  var newElement = _packagesInfoListProp.GetArrayElementAtIndex(i);
                  newElement.FindPropertyRelative("timeout").intValue = DefaultTimeout;
+                 newElement.FindPropertyRelative("downloadingMaxNum").intValue = DefaultDownloadingMaxNum;
+                 newElement.FindPropertyRelative("failedTryAgainTimes").intValue = DefaultFailedTryAgainTimes;
              }
 
              for (int i = 0; i < _packagesInfoListProp.arraySize; i++)
@@ -136,7 +152,12 @@
 
                      EditorGUILayout.Space(4);
 
-                     DrawClearCacheBundleInfo(element);
+                     DrawClearCacheBundleInfo(element, packageName);
+
+                     if (playMode is PlayMode.HostPlayMode or PlayMode.WeChatMiniGameMode or PlayMode.TTMiniGameMode)
+                     {
+                         DrawDownloadTags(element, packageName);
+                     }
 
                      EditorGUI.indentLevel--;
                  }
@@ -146,10 +167,9 @@
              }
          }
 
-         private void DrawClearCacheBundleInfo(SerializedProperty fatherProperty)
+         private void DrawClearCacheBundleInfo(SerializedProperty fatherProperty, string packageName)
          {
              EditorGUILayout.BeginVertical("box");
-             //var packageNameProp = element.FindPropertyRelative("packageName");
              EditorGUILayout.LabelField("Package Clear Cache Setting", EditorStyles.boldLabel);
              EditorGUILayout.Space(2);
              var clearCacheBundleInfoProperty = fatherProperty.FindPropertyRelative("clearCacheBundleInfo");
@@ -166,13 +186,34 @@
              else if (mode == ClearCacheOperationMode.ClearBundleFilesByTags)
              {
                  var tagsProp = clearCacheBundleInfoProperty.FindPropertyRelative("tags");
-                 EditorGUILayout.PropertyField(tagsProp);
+                 var availableTags = BundleCollectorSettingData.Setting.GetPackageAllTags(packageName);
+                 TagListDrawer.Draw(tagsProp, availableTags, "Tags");
              }
 
              EditorGUILayout.EndVertical();
+         }
 
+         private void DrawDownloadTags(SerializedProperty element, string packageName)
+         {
+             EditorGUILayout.BeginVertical("box");
 
+             var downloadingMaxNumProp = element.FindPropertyRelative("downloadingMaxNum");
+             if (downloadingMaxNumProp.intValue <= 0)
+                 downloadingMaxNumProp.intValue = DefaultDownloadingMaxNum;
+             EditorGUILayout.PropertyField(downloadingMaxNumProp);
 
+             var failedTryAgainTimesProp = element.FindPropertyRelative("failedTryAgainTimes");
+             if (failedTryAgainTimesProp.intValue <= 0)
+                 failedTryAgainTimesProp.intValue = DefaultFailedTryAgainTimes;
+             EditorGUILayout.PropertyField(failedTryAgainTimesProp);
+
+             var tagsProp = element.FindPropertyRelative("downloadTags");
+             var availableTags = BundleCollectorSettingData.Setting.GetPackageAllTags(packageName);
+             TagListDrawer.Draw(
+                 tagsProp,
+                 availableTags,
+                 "Download Tags");
+             EditorGUILayout.EndVertical();
          }
      }
  }
