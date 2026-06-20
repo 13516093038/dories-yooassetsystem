@@ -18,6 +18,7 @@ namespace Dories.YooAssetSystem.Patch.Runtime.Operations
             }
             else
             {
+                Debug.LogError($"Failed to request package version: {operation.Error}");
                 return PlayerPrefs.GetString(package.PackageName + "_GAME_VERSION", string.Empty);
             }
         }

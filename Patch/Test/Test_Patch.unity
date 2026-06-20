@@ -475,7 +475,7 @@ PrefabInstance:
     - target: {fileID: 8957140407986392396, guid: 1aa41bdebf4364bfd8b38668bbccc451,
         type: 3}
       propertyPath: packagesInfoList.Array.data[0].timeout
-      value: 60
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 8957140407986392396, guid: 1aa41bdebf4364bfd8b38668bbccc451,
         type: 3}
@@ -491,6 +491,11 @@ PrefabInstance:
         type: 3}
       propertyPath: packagesInfoList.Array.data[1].packageName
       value: TestPackage2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8957140407986392396, guid: 1aa41bdebf4364bfd8b38668bbccc451,
+        type: 3}
+      propertyPath: packagesInfoList.Array.data[0].remoteService
+      value: Patch.Test.Scripts.TestRemoteService
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

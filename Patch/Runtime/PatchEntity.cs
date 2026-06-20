@@ -22,7 +22,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             [SerializeField] private int timeout = 60;
             [SerializeField] private int downloadingMaxNum = 10;
             [SerializeField] private int failedTryAgainTimes = 3;
-        [SerializeField] private ClearCacheBundleInfo clearCacheBundleInfo = new ClearCacheBundleInfo();
+            [SerializeField] private ClearCacheBundleInfo clearCacheBundleInfo = new ClearCacheBundleInfo();
 
             public string PackageName => packageName;
             public bool IsSupportWeakOnline => isSupportWeakOnline;
@@ -63,8 +63,8 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         /// </summary>
         public IReadOnlyList<PackageInfo> PackagesInfoList => packagesInfoList;
         
-        internal Action<PatchDownlaoder> _needUpdateListener;
-        internal PatchDownlaoder _patchDowner;
+        internal Action<PatchDownloader> _needUpdateListener;
+        internal PatchDownloader _patchDowner;
         internal Action _patchCompleted;
         internal Action<string> _patchFailed;
         internal Action<string> _patchError;
@@ -163,7 +163,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             return null;
         }
 
-        public PatchEntity BuildNeedUpdateListener(Action<PatchDownlaoder> listener)
+        public PatchEntity BuildNeedUpdateListener(Action<PatchDownloader> listener)
         {
             _needUpdateListener = listener;
             return this;

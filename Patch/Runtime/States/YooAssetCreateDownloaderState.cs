@@ -18,26 +18,8 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
             {
                 packageNames.Add(packageInfo.PackageName);
             }
-
-            var patchDowner = new PatchDownlaoder(packageNames);
-
-            foreach (var packageInfo in _owner.packagesInfoList)
-            {
-                patchDowner.DownloadAll(
-                    packageInfo.PackageName,
-                    packageInfo.DownloadingMaxNum,
-                    packageInfo.FailedTryAgain);
-            }
-
-            var (totalCount, _) = patchDowner.GetTotalPendingDownload();
-            patchDowner.NeedDownload = totalCount > 0;
-
-            if (totalCount == 0)
-            {
-                ChangeState<YooAssetDownloadFileOverState>();
-                return;
-            }
-
+            
+            var patchDowner = new PatchDownloader(packageNames, _logger);
             _owner._patchDowner = patchDowner;
             ChangeState<YooAssetDownloadPackageFilesState>();
             _owner._needUpdateListener?.Invoke(patchDowner);

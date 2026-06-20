@@ -1,5 +1,6 @@
 using Dories.YooAssetSystem.Runtime.Patch;
 using UnityEngine;
+using YooAsset;
 
 public class PatchTest : MonoBehaviour
 {
@@ -9,6 +10,7 @@ public class PatchTest : MonoBehaviour
     {
         patchEntity.BuildNeedUpdateListener(downloader =>
             {
+                downloader.DownloadAll("TestPackage1", 100, 10);
                 var (count, bytes) = downloader.GetTotalPendingDownload();
                 Debug.Log($"Need update, count: {count}, bytes: {bytes}");
 
@@ -18,9 +20,22 @@ public class PatchTest : MonoBehaviour
 
                 downloader.StartDownload();
             })
-            .BuildPatchCompleteListener(() => { Debug.Log("Patch complete"); })
+            .BuildPatchCompleteListener(() =>
+            {
+                Debug.Log("Patch complete");
+
+                LoadCube();
+            })
             .BuildPatchFailedListener(error => { Debug.Log("Patch failed: " + error); })
             .BuildPatchErrorListener(error => { Debug.Log("Patch error: " + error); })
             .StartPatch();
+    }
+
+    private async void LoadCube()
+    {
+        var handle =  YooAssets.GetPackage("TestPackage1").LoadAssetAsync<GameObject>("Packages/com.dories.yooassetsystem/Patch/Test/Res/Cube.prefab");
+        await handle;
+        GameObject.Instantiate(handle.AssetObject);
+        handle.Release();
     }
 }

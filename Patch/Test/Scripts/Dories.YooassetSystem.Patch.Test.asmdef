@@ -2,7 +2,8 @@
     "name": "Dories.YooassetSystem.Patch.Test",
     "rootNamespace": "",
     "references": [
-        "GUID:b4790d316a1c349c4993e6dc60c5b1e9"
+        "GUID:b4790d316a1c349c4993e6dc60c5b1e9",
+        "GUID:e34a5702dd353724aa315fb8011f08c3"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
