@@ -207,6 +207,9 @@ using YooAsset;
                  failedTryAgainTimesProp.intValue = DefaultFailedTryAgainTimes;
              EditorGUILayout.PropertyField(failedTryAgainTimesProp);
 
+             var isCombineDownloaderProp = element.FindPropertyRelative("isCombineDownloader");
+             EditorGUILayout.PropertyField(isCombineDownloaderProp);
+
              var tagsProp = element.FindPropertyRelative("downloadTags");
              var availableTags = BundleCollectorSettingData.Setting.GetPackageAllTags(packageName);
              TagListDrawer.Draw(

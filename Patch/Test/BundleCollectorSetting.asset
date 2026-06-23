@@ -34,7 +34,7 @@ MonoBehaviour:
         CollectorGUID: 1b13ceea74c469647a3deeb48aa1507c
         CollectorType: 0
         AddressRuleName: AddressByFileName
-        PackRuleName: PackDirectory
+        PackRuleName: PackSeparately
         FilterRuleName: CollectAll
         AssetTags: Test1
         UserData: 
@@ -42,7 +42,7 @@ MonoBehaviour:
         CollectorGUID: 9e53e59a7089ddd4f9dc0495cd76cac2
         CollectorType: 0
         AddressRuleName: AddressByFileName
-        PackRuleName: PackDirectory
+        PackRuleName: PackSeparately
         FilterRuleName: CollectAll
         AssetTags: Test2
         UserData: 

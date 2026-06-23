@@ -23,6 +23,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             [SerializeField] private ClearCacheBundleInfo clearCacheBundleInfo = new ClearCacheBundleInfo();
             [SerializeField] private int downloadingMaxNum = 10;
             [SerializeField] private int failedTryAgainTimes = 3;
+            [SerializeField] private bool isCombineDownloader;
             [SerializeField] private string[] downloadTags;
 
             public string PackageName => packageName;
@@ -33,6 +34,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             public string PackageVersion { get; internal set; }
             public int DownloadingMaxNum => downloadingMaxNum;
             public int FailedTryAgain => failedTryAgainTimes;
+            public bool IsCombineDownloader => isCombineDownloader;
             public ClearCacheBundleInfo ClearCacheBundleInfo => clearCacheBundleInfo;
             public string[] DownloadTags => downloadTags;
             
@@ -65,6 +67,8 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         /// 只读访问已配置的 Package 列表
         /// </summary>
         public IReadOnlyList<PackageInfo> PackagesInfoList => packagesInfoList;
+
+        public bool IsAutoDownload => isAutoDownload;
         
         internal Action<PatchDownloader> _needUpdateListener;
         internal PatchDownloader _patchDowner;

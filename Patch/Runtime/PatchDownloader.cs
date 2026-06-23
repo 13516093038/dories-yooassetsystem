@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Dories.YooAssetSystem.Runtime.Patch.LogSystem;
 #if DORIES_UNITASK_SUPPORT
 using Cysharp.Threading.Tasks;
@@ -23,22 +24,6 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             Fail,
         }
 
-        private sealed class DownloadPlanItem
-        {
-            public ResourceDownloaderOptions? ResourceOptions;
-            public BundleDownloaderOptions? BundleOptions;
-
-            public static DownloadPlanItem FromResource(ResourceDownloaderOptions options)
-            {
-                return new DownloadPlanItem { ResourceOptions = options };
-            }
-
-            public static DownloadPlanItem FromBundle(BundleDownloaderOptions options)
-            {
-                return new DownloadPlanItem { BundleOptions = options };
-            }
-        }
-
         internal Dictionary<string, Action<DownloadProgressChangedEventArgs>> _onDownloadProgressChanged;
         internal Dictionary<string, Action<DownloadCompletedEventArgs>> _onDownloadCompleted;
         internal Dictionary<string, Action<DownloadErrorEventArgs>> _onDownloadError;
@@ -47,10 +32,10 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         internal Action _allPackageDownloadCompleted;
         internal Action<string> _onDownloadFailed;
 
-        private readonly List<string> _packageNames;
-        private readonly Dictionary<string, List<DownloadPlanItem>> _downloadPlans;
+        private Dictionary<string, List<ResourceDownloaderOperation>> _resourceDownloaderOperations;
 
         private DownloaderOperation _curDownloader;
+        private List<PatchEntity.PackageInfo> _packageInfos;
         private ILog _logger;
 
         public DownloadStatus Status { get; internal set; }
@@ -58,81 +43,107 @@ namespace Dories.YooAssetSystem.Runtime.Patch
 
         public string CurrentDownloadingPackage { get; internal set; }
 
-        #region 下载计划配置
+        internal PatchDownloader(List<PatchEntity.PackageInfo> packageInfos, ILog logger)
+        {
+            _packageInfos = packageInfos;
+            _logger  = logger;
+            Status = DownloadStatus.Undo;
+            _onDownloadProgressChanged = new Dictionary<string, Action<DownloadProgressChangedEventArgs>>();
+            _onDownloadCompleted = new Dictionary<string, Action<DownloadCompletedEventArgs>>();
+            _onDownloadError = new Dictionary<string, Action<DownloadErrorEventArgs>>();
+            _onDownloadFileStarted = new Dictionary<string, Action<DownloadFileStartedEventArgs>>();
+            _resourceDownloaderOperations = new Dictionary<string, List<ResourceDownloaderOperation>>();
+
+            foreach(var packageInfo in packageInfos)
+            {
+                ApplyPackageInfoDownloadOptions(packageInfo);
+            }
+
+            RefreshNeedDownload();
+        }
+
+        public void AddDownloaderWithTag(string packageName, string tag, int maxConcurrency, int retryCount)
+        {
+            if (!_resourceDownloaderOperations.TryGetValue(packageName, out var resourceDownloaderOperations))
+            {
+                resourceDownloaderOperations = new List<ResourceDownloaderOperation>();
+                _resourceDownloaderOperations[packageName] = resourceDownloaderOperations;
+            }
+
+            resourceDownloaderOperations.Add(YooAssets.GetPackage(packageName)
+                .CreateResourceDownloader(new ResourceDownloaderOptions(tag, maxConcurrency, retryCount)));
+
+            RefreshNeedDownload();
+        }
+        
+
+        public void AddDownloaderWithTags(string packageName, string[] tags, int maxConcurrency, int retryCount)
+        {
+            if (!_resourceDownloaderOperations.TryGetValue(packageName, out var resourceDownloaderOperations))
+            {
+                resourceDownloaderOperations = new List<ResourceDownloaderOperation>();
+                _resourceDownloaderOperations[packageName] = resourceDownloaderOperations;
+            }
+            
+            resourceDownloaderOperations.Add(YooAssets.GetPackage(packageName)
+                .CreateResourceDownloader(new ResourceDownloaderOptions(tags, maxConcurrency, retryCount)));
+
+            RefreshNeedDownload();
+        }
+
 
         /// <summary>
-        /// 下载该 Package 的全部差异资源（整包热更）
+        /// 按 PackageInfo 配置应用下载计划（Tag 为空则整包热更）。
         /// </summary>
-        public PatchDownloader DownloadAll(string packageName, int maxConcurrency, int retryCount)
+        private void ApplyPackageInfoDownloadOptions(PatchEntity.PackageInfo packageInfo)
         {
-            return AddResourceOptions(packageName, new ResourceDownloaderOptions(maxConcurrency, retryCount));
+            if (packageInfo == null)
+                throw new ArgumentNullException(nameof(packageInfo));
+
+            var packageName = packageInfo.PackageName;
+            var maxConcurrency = NormalizeMaxConcurrency(packageInfo.DownloadingMaxNum);
+            var retryCount = NormalizeRetryCount(packageInfo.FailedTryAgain);
+
+            var tags = packageInfo.DownloadTags;
+
+            if (!_resourceDownloaderOperations.TryGetValue(packageName, out var resourceDownloaderOperations))
+            {
+                resourceDownloaderOperations = new List<ResourceDownloaderOperation>();
+                _resourceDownloaderOperations[packageName] = resourceDownloaderOperations;
+            }
+
+            if(tags == null || tags.Length == 0)
+            {
+                resourceDownloaderOperations.Add(YooAssets.GetPackage(packageName)
+                    .CreateResourceDownloader(new ResourceDownloaderOptions(maxConcurrency, retryCount)));
+            }
+            else
+            {
+                resourceDownloaderOperations.Add(YooAssets.GetPackage(packageName)
+                    .CreateResourceDownloader(new ResourceDownloaderOptions(tags, maxConcurrency, retryCount)));
+            }
         }
 
         /// <summary>
-        /// 只下载指定 Tag 的资源
+        /// 重新计算是否存在待下载资源。
         /// </summary>
-        public PatchDownloader DownloadByTag(string packageName, string tag, int maxConcurrency, int retryCount)
+        private void RefreshNeedDownload()
+
         {
-            return AddResourceOptions(packageName, new ResourceDownloaderOptions(tag, maxConcurrency, retryCount));
+            var (count, _) = GetTotalPendingDownload();
+            NeedDownload = count > 0;
         }
 
-        /// <summary>
-        /// 下载多个 Tag 的资源
-        /// </summary>
-        public PatchDownloader DownloadByTags(string packageName, string[] tags, int maxConcurrency, int retryCount)
+        private static int NormalizeMaxConcurrency(int maxConcurrency)
         {
-            return AddResourceOptions(packageName, new ResourceDownloaderOptions(tags, maxConcurrency, retryCount));
+            if (maxConcurrency <= 0)
+                return 10;
+            return Mathf.Clamp(maxConcurrency, 1, 32);
         }
 
-        /// <summary>
-        /// 追加一条按 Tag/全量的下载计划（同一 Package 多条会 Combine）
-        /// </summary>
-        public PatchDownloader AddResourceOptions(string packageName, ResourceDownloaderOptions option)
+        private static int NormalizeRetryCount(int retryCount)
         {
-            EnsureCanConfigure(packageName);
-            GetOrCreatePlanList(packageName).Add(DownloadPlanItem.FromResource(option));
-            return this;
-        }
-
-        /// <summary>
-        /// 追加一条按 AssetInfo 的下载计划
-        /// </summary>
-        public PatchDownloader AddBundleOptions(string packageName, BundleDownloaderOptions option)
-        {
-            EnsureCanConfigure(packageName);
-            GetOrCreatePlanList(packageName).Add(DownloadPlanItem.FromBundle(option));
-            return this;
-        }
-
-        /// <summary>
-        /// 用单条计划替换某 Package 的全部配置
-        /// </summary>
-        public PatchDownloader SetDownloadPlan(string packageName, ResourceDownloaderOptions option)
-        {
-            ClearDownloadPlan(packageName);
-            return AddResourceOptions(packageName, option);
-        }
-
-        /// <summary>
-        /// 清空某 Package 的下载计划
-        /// </summary>
-        public PatchDownloader ClearDownloadPlan(string packageName)
-        {
-            EnsureCanConfigure(packageName);
-            _downloadPlans.Remove(packageName);
-            return this;
-        }
-
-        #endregion
-
-        #region 下载计划查询
-
-        /// <summary>
-        /// 该 Package 是否配置了下载计划
-        /// </summary>
-        public bool HasDownloadPlan(string packageName)
-        {
-            return _downloadPlans.TryGetValue(packageName, out var plans) && plans.Count > 0;
+            return retryCount > 0 ? retryCount : 3;
         }
 
         /// <summary>
@@ -140,8 +151,12 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         /// </summary>
         public int GetPendingDownloadCount(string packageName)
         {
-            var downloader = BuildCombinedDownloader(packageName);
-            return downloader?.TotalDownloadCount ?? 0;
+            int count = 0;
+            foreach(var downloader in _resourceDownloaderOperations[packageName])
+            {
+                count += downloader.TotalDownloadCount;
+            }
+            return count;
         }
 
         /// <summary>
@@ -149,8 +164,12 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         /// </summary>
         public long GetPendingDownloadBytes(string packageName)
         {
-            var downloader = BuildCombinedDownloader(packageName);
-            return downloader?.TotalDownloadBytes ?? 0;
+            long bytes = 0;
+            foreach(var downloader in _resourceDownloaderOperations[packageName])
+            {
+                bytes += downloader.TotalDownloadBytes;
+            }
+            return bytes;
         }
 
         /// <summary>
@@ -160,18 +179,15 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             int count = 0;
             long bytes = 0;
-            foreach (var packageName in _packageNames)
+            foreach (var packageInfo in _packageInfos)
             {
-                count += GetPendingDownloadCount(packageName);
-                bytes += GetPendingDownloadBytes(packageName);
+                count += GetPendingDownloadCount(packageInfo.PackageName);
+                bytes += GetPendingDownloadBytes(packageInfo.PackageName);
             }
 
             return (count, bytes);
         }
 
-        #endregion
-
-        #region 事件订阅
 
         public PatchDownloader DownloadProgressChangedEventArgs(string packageName,
             Action<DownloadProgressChangedEventArgs> onDownloadProgressChanged)
@@ -216,24 +232,20 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             return this;
         }
 
-        #endregion
-
         /// <summary>
         /// 开始下载
         /// </summary>
         public void StartDownload()
         {
-            if (Status != DownloadStatus.Undo && Status != DownloadStatus.Cancel)
+            if (Status != DownloadStatus.Undo && Status != DownloadStatus.Cancel && Status != DownloadStatus.Fail)
             {
                 _logger.Error("Download status is not undo or cancel");
                 return;
             }
 
-            if (_downloadPlans.Count == 0)
+            if(!NeedDownload)
             {
-                _logger.Warn("No download plan configured.");
-                Status = DownloadStatus.Fail;
-                _onDownloadFailed?.Invoke("No download plan configured.");
+                _logger.Warn("No need to download");
                 return;
             }
 
@@ -247,40 +259,42 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         private async Task DownloadTask()
 #endif
         {
-            foreach (var packageName in _packageNames)
+            foreach (var packageInfo in _packageInfos)
             {
-                if (!HasDownloadPlan(packageName))
-                    continue;
-
-                var combined = BuildCombinedDownloader(packageName);
-                if (combined == null || combined.TotalDownloadCount == 0)
-                    continue;
-
-                _curDownloader = combined;
-                SubscribeDownloadEvents(packageName);
-
-                try
+                if (!packageInfo.IsCombineDownloader)
                 {
-                    _curDownloader.StartDownload();
-                    _logger.Info("Start download: " + packageName);
-                    CurrentDownloadingPackage = packageName;
-                    await _curDownloader;
-
-                    if (_curDownloader.Status != EOperationStatus.Succeeded)
-                    {
-                        Status = DownloadStatus.Fail;
-                        _logger.Error($"Download {packageName} error: { _curDownloader.Error }");
-                        _onDownloadFailed?.Invoke(_curDownloader.Error);
-                        return;
-                    }
+                    var downloader = BuildCombinedDownloader(packageInfo.PackageName);
+                    _resourceDownloaderOperations[packageInfo.PackageName].Clear();
+                    _resourceDownloaderOperations[packageInfo.PackageName].Add(downloader);
                 }
-                finally
+
+                foreach (var downloader in _resourceDownloaderOperations[packageInfo.PackageName])
                 {
-                    UnsubscribeDownloadEvents(packageName);
+                    _curDownloader = downloader;
+                    SubscribeDownloadEvents(packageInfo.PackageName);
+
+                    try
+                    {
+                        _curDownloader.StartDownload();
+                        _logger.Info("Start download: " + packageInfo.PackageName);
+                        CurrentDownloadingPackage = packageInfo.PackageName;
+                        await _curDownloader;
+
+                        if (_curDownloader.Status != EOperationStatus.Succeeded)
+                        {
+                            Status = DownloadStatus.Fail;
+                            _logger.Error($"Download {packageInfo.PackageName} error: {_curDownloader.Error}");
+                            _onDownloadFailed?.Invoke(_curDownloader.Error);
+                            return;
+                        }
+                    }
+                    finally
+                    {
+                        UnsubscribeDownloadEvents(packageInfo.PackageName);
+                    }
                 }
             }
 
-            _downloadPlans.Clear();
             Status = DownloadStatus.Complete;
             _allPackageDownloadCompleted?.Invoke();
         }
@@ -324,73 +338,19 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             }
         }
 
-        internal PatchDownloader(List<string> packageNames, ILog logger)
-        {
-            _logger  = logger;
-            Status = DownloadStatus.Undo;
-            _packageNames = packageNames;
-            _downloadPlans = new Dictionary<string, List<DownloadPlanItem>>();
-            _onDownloadProgressChanged = new Dictionary<string, Action<DownloadProgressChangedEventArgs>>();
-            _onDownloadCompleted = new Dictionary<string, Action<DownloadCompletedEventArgs>>();
-            _onDownloadError = new Dictionary<string, Action<DownloadErrorEventArgs>>();
-            _onDownloadFileStarted = new Dictionary<string, Action<DownloadFileStartedEventArgs>>();
-        }
-
-        private List<DownloadPlanItem> GetOrCreatePlanList(string packageName)
-        {
-            if (!_downloadPlans.TryGetValue(packageName, out var plans))
-            {
-                plans = new List<DownloadPlanItem>();
-                _downloadPlans[packageName] = plans;
-            }
-
-            return plans;
-        }
-
-        private void EnsureCanConfigure(string packageName)
-        {
-            if (Status != DownloadStatus.Undo && Status != DownloadStatus.Cancel)
-            {
-                throw new InvalidOperationException("下载已开始，不能修改下载计划");
-            }
-
-            if (!_packageNames.Contains(packageName))
-            {
-                throw new ArgumentException($"未知 Package: {packageName}", nameof(packageName));
-            }
-        }
-
         private ResourceDownloaderOperation BuildCombinedDownloader(string packageName)
         {
-            if (!_downloadPlans.TryGetValue(packageName, out var plans) || plans.Count == 0)
-                return null;
-
-            var package = YooAssets.GetPackage(packageName);
-            ResourceDownloaderOperation combined = null;
-
-            foreach (var item in plans)
+            if (!_resourceDownloaderOperations.TryGetValue(packageName, out var resourceDownloaderOperations) ||
+                resourceDownloaderOperations.Count == 0)
             {
-                ResourceDownloaderOperation partial;
-                if (item.ResourceOptions.HasValue)
-                {
-                    partial = package.CreateResourceDownloader(item.ResourceOptions.Value);
-                }
-                else if (item.BundleOptions.HasValue)
-                {
-                    partial = package.CreateResourceDownloader(item.BundleOptions.Value);
-                }
-                else
-                {
-                    continue;
-                }
-
-                combined = combined == null ? partial : CombineDownloaders(combined, partial);
+                _logger.Error($"No resource downloader operations for package: {packageName}");
+                 return null;
             }
 
-            return combined;
+            return resourceDownloaderOperations.Aggregate((a, b) => CombineDownloaders(a, b));
         }
 
-        private static ResourceDownloaderOperation CombineDownloaders(
+        private ResourceDownloaderOperation CombineDownloaders(
             ResourceDownloaderOperation first,
             ResourceDownloaderOperation second)
         {

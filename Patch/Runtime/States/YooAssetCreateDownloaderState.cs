@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
 
 namespace Dories.YooAssetSystem.Runtime.Patch.States
@@ -12,17 +11,30 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
 
         private void CreateDownloaderTask()
         {
-            var packageNames = new List<string>();
+            var patchDownloader = new PatchDownloader(_owner.packagesInfoList, _logger);
+            _owner._patchDowner = patchDownloader;
 
-            foreach (var packageInfo in _owner.packagesInfoList)
+            if (_owner.isAutoDownload)
             {
-                packageNames.Add(packageInfo.PackageName);
+                if (patchDownloader.NeedDownload)
+                {
+                    _logger.Info("Start download by auto download");
+                    ChangeState<YooAssetDownloadPackageFilesState>();
+                    _owner._needUpdateListener?.Invoke(patchDownloader);
+                    patchDownloader.StartDownload();
+                }
+                else
+                {
+                    _logger.Info("No need to download, skip download");
+                    ChangeState<YooAssetDownloadFileOverState>();
+                }
             }
-            
-            var patchDowner = new PatchDownloader(packageNames, _logger);
-            _owner._patchDowner = patchDowner;
-            ChangeState<YooAssetDownloadPackageFilesState>();
-            _owner._needUpdateListener?.Invoke(patchDowner);
+            else
+            {
+                //用户可以在此动态设置下载器
+                  ChangeState<YooAssetDownloadPackageFilesState>();
+                 _owner._needUpdateListener?.Invoke(patchDownloader);
+            }
         }
     }
 }
