@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Dories.YooAssetSystem.Runtime.Patch.LogSystem;
 #if DORIES_UNITASK_SUPPORT
 using Cysharp.Threading.Tasks;
@@ -24,14 +23,34 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             Fail,
         }
 
+        public struct DownloaderOperationBuilderFactor
+        {
+            public string[] tags;
+            public int maxConcurrency;
+            public int retryCount;
+
+            public DownloaderOperationBuilderFactor(string[] tags, int maxConcurrency, int retryCount)
+            {
+                this.tags = tags;
+                this.maxConcurrency = maxConcurrency;
+                this.retryCount = retryCount;
+            }
+        }
+
         internal Dictionary<string, Action<DownloadProgressChangedEventArgs>> _onDownloadProgressChanged;
         internal Dictionary<string, Action<DownloadCompletedEventArgs>> _onDownloadCompleted;
         internal Dictionary<string, Action<DownloadErrorEventArgs>> _onDownloadError;
         internal Dictionary<string, Action<DownloadFileStartedEventArgs>> _onDownloadFileStarted;
 
+        internal Action<DownloadProgressChangedEventArgs> _allDownloadProgressChanged;
+        internal Action<DownloadCompletedEventArgs> _allDownloadCompleted;
+        internal Action<DownloadErrorEventArgs> _allDownloadError;
+        internal Action<DownloadFileStartedEventArgs> _allDownloadFileStarted;
+
         internal Action _allPackageDownloadCompleted;
         internal Action<string> _onDownloadFailed;
 
+        private Dictionary<string, List<DownloaderOperationBuilderFactor>> _downloaderOperationBuilderFactors;
         private Dictionary<string, List<ResourceDownloaderOperation>> _resourceDownloaderOperations;
 
         private DownloaderOperation _curDownloader;
@@ -39,7 +58,6 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         private ILog _logger;
 
         public DownloadStatus Status { get; internal set; }
-        public bool NeedDownload { get; internal set; }
 
         public string CurrentDownloadingPackage { get; internal set; }
 
@@ -52,111 +70,121 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             _onDownloadCompleted = new Dictionary<string, Action<DownloadCompletedEventArgs>>();
             _onDownloadError = new Dictionary<string, Action<DownloadErrorEventArgs>>();
             _onDownloadFileStarted = new Dictionary<string, Action<DownloadFileStartedEventArgs>>();
+            _downloaderOperationBuilderFactors = new Dictionary<string, List<DownloaderOperationBuilderFactor>>();
             _resourceDownloaderOperations = new Dictionary<string, List<ResourceDownloaderOperation>>();
-
-            foreach(var packageInfo in packageInfos)
-            {
-                ApplyPackageInfoDownloadOptions(packageInfo);
-            }
-
-            RefreshNeedDownload();
+            BuildPackageInfoFactors();
         }
-
-        public void AddDownloaderWithTag(string packageName, string tag, int maxConcurrency, int retryCount)
-        {
-            if (!_resourceDownloaderOperations.TryGetValue(packageName, out var resourceDownloaderOperations))
-            {
-                resourceDownloaderOperations = new List<ResourceDownloaderOperation>();
-                _resourceDownloaderOperations[packageName] = resourceDownloaderOperations;
-            }
-
-            resourceDownloaderOperations.Add(YooAssets.GetPackage(packageName)
-                .CreateResourceDownloader(new ResourceDownloaderOptions(tag, maxConcurrency, retryCount)));
-
-            RefreshNeedDownload();
-        }
-        
-
-        public void AddDownloaderWithTags(string packageName, string[] tags, int maxConcurrency, int retryCount)
-        {
-            if (!_resourceDownloaderOperations.TryGetValue(packageName, out var resourceDownloaderOperations))
-            {
-                resourceDownloaderOperations = new List<ResourceDownloaderOperation>();
-                _resourceDownloaderOperations[packageName] = resourceDownloaderOperations;
-            }
-            
-            resourceDownloaderOperations.Add(YooAssets.GetPackage(packageName)
-                .CreateResourceDownloader(new ResourceDownloaderOptions(tags, maxConcurrency, retryCount)));
-
-            RefreshNeedDownload();
-        }
-
 
         /// <summary>
-        /// 按 PackageInfo 配置应用下载计划（Tag 为空则整包热更）。
+        /// 构建检视器中配置的下载器因子
         /// </summary>
-        private void ApplyPackageInfoDownloadOptions(PatchEntity.PackageInfo packageInfo)
+        private void BuildPackageInfoFactors()
         {
-            if (packageInfo == null)
-                throw new ArgumentNullException(nameof(packageInfo));
-
-            var packageName = packageInfo.PackageName;
-            var maxConcurrency = NormalizeMaxConcurrency(packageInfo.DownloadingMaxNum);
-            var retryCount = NormalizeRetryCount(packageInfo.FailedTryAgain);
-
-            var tags = packageInfo.DownloadTags;
-
-            if (!_resourceDownloaderOperations.TryGetValue(packageName, out var resourceDownloaderOperations))
+            foreach (var packageInfo in _packageInfos)
             {
-                resourceDownloaderOperations = new List<ResourceDownloaderOperation>();
-                _resourceDownloaderOperations[packageName] = resourceDownloaderOperations;
-            }
+                if (packageInfo.DownloadTags == null || packageInfo.DownloadTags.Length == 0)
+                {
+                    continue;
+                }
 
-            if(tags == null || tags.Length == 0)
-            {
-                resourceDownloaderOperations.Add(YooAssets.GetPackage(packageName)
-                    .CreateResourceDownloader(new ResourceDownloaderOptions(maxConcurrency, retryCount)));
-            }
-            else
-            {
-                resourceDownloaderOperations.Add(YooAssets.GetPackage(packageName)
-                    .CreateResourceDownloader(new ResourceDownloaderOptions(tags, maxConcurrency, retryCount)));
+                var factors = new List<DownloaderOperationBuilderFactor>();
+                factors.Add(new DownloaderOperationBuilderFactor(packageInfo.DownloadTags,
+                    packageInfo.DownloadingMaxNum, packageInfo.FailedTryAgain));
+                
+               _downloaderOperationBuilderFactors[packageInfo.PackageName] = factors;
             }
         }
 
         /// <summary>
-        /// 重新计算是否存在待下载资源。
+        /// 额外添加下载因子
         /// </summary>
-        private void RefreshNeedDownload()
-
+        /// <param name="packageName"></param>
+        /// <param name="tag"></param>
+        /// <param name="maxConcurrency"></param>
+        /// <param name="retryCount"></param>
+        public void AddDownloaderFactorWithTag(string packageName, string tag, int maxConcurrency, int retryCount)
         {
-            var (count, _) = GetTotalPendingDownload();
-            NeedDownload = count > 0;
-        }
+            if (!_downloaderOperationBuilderFactors.TryGetValue(packageName, out var downloaderOperationBuilderFactors))
+            {
+                downloaderOperationBuilderFactors = new List<DownloaderOperationBuilderFactor>();
+                _downloaderOperationBuilderFactors[packageName] = downloaderOperationBuilderFactors;
+            }
 
-        private static int NormalizeMaxConcurrency(int maxConcurrency)
-        {
-            if (maxConcurrency <= 0)
-                return 10;
-            return Mathf.Clamp(maxConcurrency, 1, 32);
-        }
-
-        private static int NormalizeRetryCount(int retryCount)
-        {
-            return retryCount > 0 ? retryCount : 3;
+            downloaderOperationBuilderFactors.Add(new DownloaderOperationBuilderFactor(new string[] { tag }, maxConcurrency, retryCount));
         }
 
         /// <summary>
-        /// 合并后的待下载文件数
+        /// 额外添加下载因子
         /// </summary>
-        public int GetPendingDownloadCount(string packageName)
+        /// <param name="packageName"></param>
+        /// <param name="tags"></param>
+        /// <param name="maxConcurrency"></param>
+        /// <param name="retryCount"></param>
+        public void AddDownloaderFactorWithTags(string packageName, string[] tags, int maxConcurrency, int retryCount)
         {
-            int count = 0;
-            foreach(var downloader in _resourceDownloaderOperations[packageName])
+            if (!_downloaderOperationBuilderFactors.TryGetValue(packageName, out var downloaderOperationBuilderFactors))
             {
-                count += downloader.TotalDownloadCount;
+                downloaderOperationBuilderFactors = new List<DownloaderOperationBuilderFactor>();
+                _downloaderOperationBuilderFactors[packageName] = downloaderOperationBuilderFactors;
             }
-            return count;
+
+            downloaderOperationBuilderFactors.Add(new DownloaderOperationBuilderFactor(tags, maxConcurrency, retryCount));
+        }
+
+        /// <summary>
+        /// 通过下载因子构建下载器（外部调用）
+        /// </summary>
+        public void BuildDownloaders()
+        {
+            foreach (var packageInfo in _packageInfos)
+            {
+               
+                if (_downloaderOperationBuilderFactors.TryGetValue(packageInfo.PackageName,
+                        out List<DownloaderOperationBuilderFactor> downloaderOperationBuilderFactors))
+                {
+                    //有相关下载因子
+                    _resourceDownloaderOperations[packageInfo.PackageName] = BuildDownloaderOperations(
+                        downloaderOperationBuilderFactors, packageInfo.IsCombineDownloader, packageInfo.PackageName);
+                }
+                else
+                {
+                    //没有相关下载因子，则全量更新
+                    _resourceDownloaderOperations[packageInfo.PackageName] = new List<ResourceDownloaderOperation>();
+                    _resourceDownloaderOperations[packageInfo.PackageName].Add(YooAssets.GetPackage(packageInfo.PackageName)
+                        .CreateResourceDownloader(new ResourceDownloaderOptions(packageInfo.DownloadingMaxNum, packageInfo.FailedTryAgain)));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 通过下载因子构建下载器
+        /// </summary>
+        /// <param name="downloaderOperationBuilderFactors"></param>
+        /// <param name="isCombineDownloader"></param>
+        /// <param name="packageName"></param>
+        /// <returns></returns>
+        private List<ResourceDownloaderOperation> BuildDownloaderOperations(
+            List<DownloaderOperationBuilderFactor> downloaderOperationBuilderFactors, bool isCombineDownloader, string packageName)
+        {
+            List<ResourceDownloaderOperation> downloaderOperations = new List<ResourceDownloaderOperation>();
+            foreach(var factor in downloaderOperationBuilderFactors)
+            {
+                downloaderOperations.Add(YooAssets.GetPackage(packageName)
+                    .CreateResourceDownloader(new ResourceDownloaderOptions(factor.tags, factor.maxConcurrency, factor.retryCount)));
+            }
+
+            if(isCombineDownloader)
+            {
+                var combineDownloader = downloaderOperations[0];
+                for(int i = 1; i < downloaderOperations.Count; i++)
+                {
+                     combineDownloader.Combine(downloaderOperations[i]);
+                }
+                downloaderOperations.Clear();
+                downloaderOperations.Add(combineDownloader);
+            }
+
+            return downloaderOperations;
         }
 
         /// <summary>
@@ -171,23 +199,6 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             }
             return bytes;
         }
-
-        /// <summary>
-        /// 所有 Package 的待下载总计
-        /// </summary>
-        public (int count, long bytes) GetTotalPendingDownload()
-        {
-            int count = 0;
-            long bytes = 0;
-            foreach (var packageInfo in _packageInfos)
-            {
-                count += GetPendingDownloadCount(packageInfo.PackageName);
-                bytes += GetPendingDownloadBytes(packageInfo.PackageName);
-            }
-
-            return (count, bytes);
-        }
-
 
         public PatchDownloader DownloadProgressChangedEventArgs(string packageName,
             Action<DownloadProgressChangedEventArgs> onDownloadProgressChanged)
@@ -237,6 +248,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         /// </summary>
         public void StartDownload()
         {
+            _logger.Info("Start download");
             if (Status != DownloadStatus.Undo && Status != DownloadStatus.Cancel && Status != DownloadStatus.Fail)
             {
                 _logger.Error("Download status is not undo or cancel");

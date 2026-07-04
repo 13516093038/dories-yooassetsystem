@@ -7,8 +7,6 @@ using YooAsset;
 public class PatchTest : MonoBehaviour
 {
     [SerializeField] private PatchEntity patchEntity;
-
-
     [SerializeField] private GameObject PatchPanel;
     [SerializeField] private Button startPatchBtn;
     [SerializeField] private Button pausePatchBtn;
@@ -24,7 +22,6 @@ public class PatchTest : MonoBehaviour
     private void Start()
     {
         PatchPanel.SetActive(false);
-
         StartPatch();
     }
 
@@ -40,6 +37,14 @@ public class PatchTest : MonoBehaviour
                     progressImage.fillAmount = args.Progress;
                 });
                 downloader.DownloadFileStartedEventArgs("TestPackage1",
+                    args => { Debug.Log($"Download file started: {args.FileName}"); });
+
+                _patchDownloader.DownloadProgressChangedEventArgs("TestPackage2", args =>
+                {
+                    loadedText.text = $"{args.CurrentDownloadCount}/{args.TotalDownloadCount}";
+                    progressImage.fillAmount = args.Progress;
+                });
+                _patchDownloader.DownloadFileStartedEventArgs("TestPackage2",
                     args => { Debug.Log($"Download file started: {args.FileName}"); });
 
                 if (_patchDownloader.NeedDownload)
