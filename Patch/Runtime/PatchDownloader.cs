@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Dories.YooAssetSystem.Runtime.Patch.LogSystem;
+using Dories.YooAssetSystem.LogSystem;
 #if DORIES_UNITASK_SUPPORT
 using Cysharp.Threading.Tasks;
 #else

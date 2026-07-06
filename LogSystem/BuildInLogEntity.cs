@@ -1,4 +1,4 @@
-﻿namespace Dories.YooAssetSystem.Runtime.Patch.LogSystem
+﻿namespace Dories.YooAssetSystem.LogSystem
 {
     public class BuildInLogEntity : ILog
     {

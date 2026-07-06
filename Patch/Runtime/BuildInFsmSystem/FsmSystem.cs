@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Dories.YooAssetSystem.Runtime.Patch.LogSystem;
+using Dories.YooAssetSystem.LogSystem;
+
 
 namespace Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem
 {
