@@ -47,14 +47,14 @@ public class PatchTest : MonoBehaviour
                 _patchDownloader.DownloadFileStartedEventArgs("TestPackage2",
                     args => { Debug.Log($"Download file started: {args.FileName}"); });
 
-                if (_patchDownloader.NeedDownload)
+                //if (_patchDownloader.NeedDownload)
                 {
                     startPatchBtn.onClick.AddListener(() => { _patchDownloader.StartDownload(); });
                     pausePatchBtn.onClick.AddListener(() => { _patchDownloader.PauseDownload(); });
                     resumePatchBtn.onClick.AddListener(() => { _patchDownloader.ResumeDownload(); });
                     cancelPatchBtn.onClick.AddListener(() => { _patchDownloader.CancelDownload(); });
                 }
-                else
+                //else
                 {
                     loadedText.text = "No need to download";
                     progressImage.fillAmount = 1;

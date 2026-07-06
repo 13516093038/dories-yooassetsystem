@@ -55,6 +55,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
 
         private DownloaderOperation _curDownloader;
         private List<PatchEntity.PackageInfo> _packageInfos;
+        private bool _isNeedBuildDownloaders = true;
         private ILog _logger;
 
         public DownloadStatus Status { get; internal set; }
@@ -111,6 +112,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             }
 
             downloaderOperationBuilderFactors.Add(new DownloaderOperationBuilderFactor(new string[] { tag }, maxConcurrency, retryCount));
+            _isNeedBuildDownloaders = true;
         }
 
         /// <summary>
@@ -129,6 +131,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             }
 
             downloaderOperationBuilderFactors.Add(new DownloaderOperationBuilderFactor(tags, maxConcurrency, retryCount));
+            _isNeedBuildDownloaders = true;
         }
 
         /// <summary>
@@ -138,7 +141,6 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             foreach (var packageInfo in _packageInfos)
             {
-               
                 if (_downloaderOperationBuilderFactors.TryGetValue(packageInfo.PackageName,
                         out List<DownloaderOperationBuilderFactor> downloaderOperationBuilderFactors))
                 {
@@ -154,6 +156,8 @@ namespace Dories.YooAssetSystem.Runtime.Patch
                         .CreateResourceDownloader(new ResourceDownloaderOptions(packageInfo.DownloadingMaxNum, packageInfo.FailedTryAgain)));
                 }
             }
+
+            _isNeedBuildDownloaders = false;
         }
 
         /// <summary>
@@ -162,7 +166,6 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         /// <param name="downloaderOperationBuilderFactors"></param>
         /// <param name="isCombineDownloader"></param>
         /// <param name="packageName"></param>
-        /// <returns></returns>
         private List<ResourceDownloaderOperation> BuildDownloaderOperations(
             List<DownloaderOperationBuilderFactor> downloaderOperationBuilderFactors, bool isCombineDownloader, string packageName)
         {
@@ -188,19 +191,103 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         }
 
         /// <summary>
-        /// 合并后的待下载字节数
+        /// 获取包裹所需下载大小
         /// </summary>
-        public long GetPendingDownloadBytes(string packageName)
+        /// <param name="packageName">包裹名称</param>
+        /// <returns>下载大小</returns>
+        public long GetNeedDownloadSize(string packageName)
         {
-            long bytes = 0;
-            foreach(var downloader in _resourceDownloaderOperations[packageName])
+            if (_isNeedBuildDownloaders)
             {
-                bytes += downloader.TotalDownloadBytes;
+                _logger.Error("Downloaders are not built, please call BuildDownloaders() first");
+                return 0;
             }
-            return bytes;
+
+            if (!_resourceDownloaderOperations.TryGetValue(packageName, out var downloaderOperations))
+            {
+                return 0;
+            }
+           
+            long downloadSize = 0;
+            foreach(var downloader in downloaderOperations)
+            {
+                downloadSize += downloader.TotalDownloadBytes;
+            }
+            return downloadSize;
         }
 
-        public PatchDownloader DownloadProgressChangedEventArgs(string packageName,
+        /// <summary>
+        /// 获取所有包裹所需下载大小
+        /// </summary>
+        /// <returns>下载大小</returns>
+        public long GetAllNeedDownloadSize()
+        {
+            if (_isNeedBuildDownloaders)
+            {
+                _logger.Error("Downloaders are not built, please call BuildDownloaders() first");
+                return 0;
+            }
+
+            long downloadSize = 0;
+            foreach(var packageInfo in _packageInfos)
+            {
+                downloadSize += GetNeedDownloadSize(packageInfo.PackageName);
+            }
+            return downloadSize;
+        }
+
+        /// <summary>
+        /// 获取包裹所需下载文件数量
+        /// </summary>
+        /// <param name="packageName">包裹名称</param>
+        /// <returns>下载文件数量</returns>
+        public int GetNeedDownloadCount(string packageName)
+        {
+            if (_isNeedBuildDownloaders)
+            {
+                _logger.Error("Downloaders are not built, please call BuildDownloaders() first");
+                return 0;
+            }
+
+            if (!_resourceDownloaderOperations.TryGetValue(packageName, out var downloaderOperations))
+            {
+                return 0;
+            }
+
+            int downloadCount = 0;
+            foreach(var downloader in downloaderOperations)
+            {
+                downloadCount += downloader.TotalDownloadCount;
+            }
+            return downloadCount;
+        }
+
+        /// <summary>
+        /// 获取所有包裹所需下载文件数量
+        /// </summary>
+        /// <returns></returns>
+        public int GetAllNeedDownloadCount()
+        {
+            if (_isNeedBuildDownloaders)
+            {
+                _logger.Error("Downloaders are not built, please call BuildDownloaders() first");
+                return 0;
+            }
+        
+            int downloadCount = 0;
+            foreach(var packageInfo in _packageInfos)
+            {
+                downloadCount += GetNeedDownloadCount(packageInfo.PackageName);
+            }
+            return downloadCount;
+        }
+
+        /// <summary>
+        /// 包裹下载进度变更事件
+        /// </summary>
+        /// <param name="packageName">包裹名称</param>
+        /// <param name="onDownloadProgressChanged">回调事件</param>
+        public void DownloadProgressChangedEventArgs(string packageName,
             Action<DownloadProgressChangedEventArgs> onDownloadProgressChanged)
         {
             if (!_onDownloadProgressChanged.TryAdd(packageName, onDownloadProgressChanged))
@@ -209,11 +296,14 @@ namespace Dories.YooAssetSystem.Runtime.Patch
                     $"DownloadProgressChanged event already exists for package: {packageName}, overwrite it");
                 _onDownloadProgressChanged[packageName] = onDownloadProgressChanged;
             }
-
-            return this;
         }
 
-        public PatchDownloader DownloadCompletedEventArgs(string packageName,
+        /// <summary>
+        /// 包裹下载完成事件
+        /// </summary>
+        /// <param name="packageName">包裹名称</param>
+        /// <param name="onDownloadCompleted">回调事件</param>
+        public void DownloadCompletedEventArgs(string packageName,
             Action<DownloadCompletedEventArgs> onDownloadCompleted)
         {
             if (!_onDownloadCompleted.TryAdd(packageName, onDownloadCompleted))
@@ -221,46 +311,103 @@ namespace Dories.YooAssetSystem.Runtime.Patch
                 _logger.Warn($"DownloadCompleted event already exists for package: {packageName}, overwrite it");
                 _onDownloadCompleted[packageName] = onDownloadCompleted;
             }
-
-            return this;
         }
 
-        public PatchDownloader DownloadErrorEventArgs(string packageName, Action<DownloadErrorEventArgs> onDownloadError)
+        /// <summary>
+        /// 包裹下载错误事件
+        /// </summary>
+        /// <param name="packageName">包裹名称</param>
+        /// <param name="onDownloadError">回调事件</param>
+        public void DownloadErrorEventArgs(string packageName, Action<DownloadErrorEventArgs> onDownloadError)
         {
             if (!_onDownloadError.TryAdd(packageName, onDownloadError))
             {
                 _logger.Warn($"DownloadError event already exists for package: {packageName}, overwrite it");
                 _onDownloadError[packageName] = onDownloadError;
             }
-
-            return this;
         }
 
-        public PatchDownloader DownloadFileStartedEventArgs(string packageName,
+        /// <summary>
+        /// 包裹下载文件开始事件
+        /// </summary>
+        /// <param name="packageName">包裹名称</param>
+        /// <param name="onDownloadFileStarted">回调事件</param>
+        public void DownloadFileStartedEventArgs(string packageName,
             Action<DownloadFileStartedEventArgs> onDownloadFileStarted)
         {
             _onDownloadFileStarted[packageName] = onDownloadFileStarted;
-            return this;
         }
+
+        /// <summary>
+        /// 设置所有包裹下载进度变更事件
+        /// </summary>
+        /// <param name="onDownloadProgressChanged"></param>
+        public void SetAllDownloadProgressChanged(Action<DownloadProgressChangedEventArgs> onDownloadProgressChanged)
+        {
+            _allDownloadProgressChanged = onDownloadProgressChanged;
+        }
+
+        /// <summary>
+        /// 设置所有包裹下载完成事件
+        /// </summary>
+        /// <param name="onDownloadCompleted"></param>
+        public void SetAllDownloadCompleted(Action<DownloadCompletedEventArgs> onDownloadCompleted)
+        {
+            _allDownloadCompleted += onDownloadCompleted;
+        }
+
+        /// <summary>
+        /// 设置所有包裹下载错误事件
+        /// </summary>
+        /// <param name="onDownloadError"></param>
+        public void SetAllDownloadError(Action<DownloadErrorEventArgs> onDownloadError)
+        {
+            _allDownloadError = onDownloadError;
+        }
+
+        /// <summary>
+        /// 设置所有包裹下载文件开始事件
+        /// </summary>
+        /// <param name="onDownloadFileStarted"></param>
+        public void SetAllDownloadFileStarted(Action<DownloadFileStartedEventArgs> onDownloadFileStarted)
+        {
+            _allDownloadFileStarted = onDownloadFileStarted;
+        }
+
 
         /// <summary>
         /// 开始下载
         /// </summary>
         public void StartDownload()
         {
-            _logger.Info("Start download");
+            if (_isNeedBuildDownloaders)
+            {
+                _logger.Error("Downloaders are not built, please call BuildDownloaders() first");
+                return;
+            }
+
+            //如果取消下载了需要重新构建下载器
+            if (Status == DownloadStatus.Cancel)
+            {
+                _resourceDownloaderOperations.Clear();
+                BuildDownloaders();
+            }
+
+            if(GetAllNeedDownloadCount() == 0)
+            {
+                _logger.Info("There is no package to download");
+                _allPackageDownloadCompleted?.Invoke();
+                return;
+            }
+
             if (Status != DownloadStatus.Undo && Status != DownloadStatus.Cancel && Status != DownloadStatus.Fail)
             {
                 _logger.Error("Download status is not undo or cancel");
                 return;
             }
 
-            if(!NeedDownload)
-            {
-                _logger.Warn("No need to download");
-                return;
-            }
-
+            _logger.Info($"Start download, total download size: {GetAllNeedDownloadSize()}, total download count: {GetAllNeedDownloadCount()}");
+            
             Status = DownloadStatus.Downloading;
             _ = DownloadTask();
         }
@@ -271,38 +418,52 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         private async Task DownloadTask()
 #endif
         {
-            foreach (var packageInfo in _packageInfos)
+            foreach (var downloaderOperation in _resourceDownloaderOperations)
             {
-                if (!packageInfo.IsCombineDownloader)
+                string packageName = downloaderOperation.Key;
+                foreach (var downloader in downloaderOperation.Value)
                 {
-                    var downloader = BuildCombinedDownloader(packageInfo.PackageName);
-                    _resourceDownloaderOperations[packageInfo.PackageName].Clear();
-                    _resourceDownloaderOperations[packageInfo.PackageName].Add(downloader);
-                }
+                    //所有回调
+                    downloader.DownloadCompleted += (args) => _allDownloadCompleted?.Invoke(args);
+                    downloader.DownloadProgressChanged += (args) => _allDownloadProgressChanged?.Invoke(args);
+                    downloader.DownloadError += (args) => _allDownloadError?.Invoke(args);
+                    downloader.DownloadFileStarted += (args) => _allDownloadFileStarted?.Invoke(args);
 
-                foreach (var downloader in _resourceDownloaderOperations[packageInfo.PackageName])
-                {
-                    _curDownloader = downloader;
-                    SubscribeDownloadEvents(packageInfo.PackageName);
-
-                    try
+                    //包裹回调
+                    if (_onDownloadCompleted.TryGetValue(packageName, out var packageDownloadCompleted))
                     {
-                        _curDownloader.StartDownload();
-                        _logger.Info("Start download: " + packageInfo.PackageName);
-                        CurrentDownloadingPackage = packageInfo.PackageName;
-                        await _curDownloader;
-
-                        if (_curDownloader.Status != EOperationStatus.Succeeded)
-                        {
-                            Status = DownloadStatus.Fail;
-                            _logger.Error($"Download {packageInfo.PackageName} error: {_curDownloader.Error}");
-                            _onDownloadFailed?.Invoke(_curDownloader.Error);
-                            return;
-                        }
+                        downloader.DownloadCompleted += packageDownloadCompleted;
                     }
-                    finally
+
+                    if (_onDownloadProgressChanged.TryGetValue(packageName, out var packageDownloadProgressChanged))
                     {
-                        UnsubscribeDownloadEvents(packageInfo.PackageName);
+                        downloader.DownloadProgressChanged += packageDownloadProgressChanged;
+                    }
+
+                    if (_onDownloadError.TryGetValue(packageName, out var packageDownloadError))
+                    {
+                        downloader.DownloadError += packageDownloadError;
+                    }
+
+                    if (_onDownloadFileStarted.TryGetValue(packageName, out var packageDownloadFileStarted))
+                    {
+                        downloader.DownloadFileStarted += packageDownloadFileStarted;
+                    }
+
+                    //开始下载
+                    downloader.StartDownload();
+                    _logger.Info(
+                        $"Start download: {packageName}, download size: {(downloader.TotalDownloadBytes / 1024 / 1024):F2} MB, download count: {downloader.TotalDownloadCount}");
+                    _curDownloader = downloader;
+                    await _curDownloader;
+                    if (_curDownloader.Status != EOperationStatus.Succeeded)
+                    {
+                        Status = DownloadStatus.Fail;
+                        _logger.Error($"Download {packageName} error: {_curDownloader.Error}");
+                        _onDownloadFailed?.Invoke(_curDownloader.Error);
+
+                        _resourceDownloaderOperations.Clear();
+                        return;
                     }
                 }
             }
@@ -348,53 +509,6 @@ namespace Dories.YooAssetSystem.Runtime.Patch
                 Status = DownloadStatus.Cancel;
                 _curDownloader.CancelDownload();
             }
-        }
-
-        private ResourceDownloaderOperation BuildCombinedDownloader(string packageName)
-        {
-            if (!_resourceDownloaderOperations.TryGetValue(packageName, out var resourceDownloaderOperations) ||
-                resourceDownloaderOperations.Count == 0)
-            {
-                _logger.Error($"No resource downloader operations for package: {packageName}");
-                 return null;
-            }
-
-            return resourceDownloaderOperations.Aggregate((a, b) => CombineDownloaders(a, b));
-        }
-
-        private ResourceDownloaderOperation CombineDownloaders(
-            ResourceDownloaderOperation first,
-            ResourceDownloaderOperation second)
-        {
-            first.Combine(second);
-            return first;
-        }
-
-        private void SubscribeDownloadEvents(string packageName)
-        {
-            if (_onDownloadCompleted.TryGetValue(packageName, out var onDownloadCompleted))
-                _curDownloader.DownloadCompleted += onDownloadCompleted;
-            if (_onDownloadProgressChanged.TryGetValue(packageName, out var onDownloadProgressChanged))
-                _curDownloader.DownloadProgressChanged += onDownloadProgressChanged;
-            if (_onDownloadError.TryGetValue(packageName, out var onDownloadError))
-                _curDownloader.DownloadError += onDownloadError;
-            if (_onDownloadFileStarted.TryGetValue(packageName, out var onDownloadFileStarted))
-                _curDownloader.DownloadFileStarted += onDownloadFileStarted;
-        }
-
-        private void UnsubscribeDownloadEvents(string packageName)
-        {
-            if (_curDownloader == null)
-                return;
-
-            if (_onDownloadCompleted.TryGetValue(packageName, out var onDownloadCompleted))
-                _curDownloader.DownloadCompleted -= onDownloadCompleted;
-            if (_onDownloadProgressChanged.TryGetValue(packageName, out var onDownloadProgressChanged))
-                _curDownloader.DownloadProgressChanged -= onDownloadProgressChanged;
-            if (_onDownloadError.TryGetValue(packageName, out var onDownloadError))
-                _curDownloader.DownloadError -= onDownloadError;
-            if (_onDownloadFileStarted.TryGetValue(packageName, out var onDownloadFileStarted))
-                _curDownloader.DownloadFileStarted -= onDownloadFileStarted;
         }
     }
 }

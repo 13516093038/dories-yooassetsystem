@@ -11,15 +11,14 @@ namespace Dories.YooAssetSystem.Patch.Runtime.Operations
             var operation = package.RequestPackageVersionAsync();
             await operation;
 
-            if (operation.Status == EOperationStatus.Succeeded)
-            {
-                PlayerPrefs.SetString(package.PackageName + "_GAME_VERSION", operation.PackageVersion);
-                return operation.PackageVersion;
-            }
-            else
+            if (operation.Status != EOperationStatus.Succeeded)
             {
                 Debug.LogError($"Failed to request package version: {operation.Error}");
                 return string.Empty;
+            }
+            else
+            {
+                return operation.PackageVersion;
             }
         }
     }

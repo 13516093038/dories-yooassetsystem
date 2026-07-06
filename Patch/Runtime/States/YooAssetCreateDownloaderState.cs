@@ -13,27 +13,13 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
         {
             var patchDownloader = new PatchDownloader(_owner.packagesInfoList, _logger);
             _owner._patchDowner = patchDownloader;
-
+            _owner._needUpdateListener?.Invoke(patchDownloader);
+            
+            ChangeState<YooAssetDownloadPackageFilesState>();
             if (_owner.isAutoDownload)
             {
-                if (patchDownloader.NeedDownload)
-                {
-                    _logger.Info("Start download by auto download");
-                    ChangeState<YooAssetDownloadPackageFilesState>();
-                    _owner._needUpdateListener?.Invoke(patchDownloader);
-                    patchDownloader.StartDownload();
-                }
-                else
-                {
-                    _logger.Info("No need to download, skip download");
-                    ChangeState<YooAssetDownloadFileOverState>();
-                }
-            }
-            else
-            {
-                //用户可以在此动态设置下载器
-                  ChangeState<YooAssetDownloadPackageFilesState>();
-                 _owner._needUpdateListener?.Invoke(patchDownloader);
+                patchDownloader.BuildDownloaders();
+                patchDownloader.StartDownload();
             }
         }
     }

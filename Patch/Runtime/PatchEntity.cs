@@ -78,6 +78,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
 
         private ILog _logger;
         private FsmSystem<PatchEntity> _fsmSystem;
+        private bool _isStarted = false;
 
         private void Awake()
         {
@@ -196,6 +197,14 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         
         public void StartPatch()
         {
+            if (_isStarted)
+            {
+                _logger.Error("Patch already started");
+                return;
+            }
+
+            _isStarted = true;
+
             _fsmSystem = new FsmSystem<PatchEntity>(this, _logger);
             
             _fsmSystem.AddNode(new YooAssetInitState());
