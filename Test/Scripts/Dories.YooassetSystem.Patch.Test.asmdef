@@ -1,0 +1,28 @@
+{
+    "name": "Dories.YooassetSystem.Patch.Test",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e34a5702dd353724aa315fb8011f08c3",
+        "GUID:34be2ba75b91747029ce41c2cfa0ecaf",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.cysharp.unitask",
+            "expression": "",
+            "define": "DORIES_UNITASK_SUPPORT"
+        }
+    ],
+    "noEngineReferences": false
+}

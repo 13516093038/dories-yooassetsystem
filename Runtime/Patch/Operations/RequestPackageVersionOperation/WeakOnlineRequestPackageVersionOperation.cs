@@ -1,17 +1,26 @@
-using Dories.YooassetSystem.Runtime.Patch.YooAssetExtensions.OperationExtensions;
+using System.Threading.Tasks;
+using UnityEngine;
 using YooAsset;
 
-namespace Dories.YooassetSystem.Runtime.Patch.Operations.RequestPackageVersionOperation
+namespace Dories.YooAssetSystem.Runtime.Patch.Operations
 {
     public class WeakOnlineRequestPackageVersionOperation : IYooAssetRequestPackageVersionOperation
     {
-        public YooAsset.RequestPackageVersionOperation RequestPackageVersion(ResourcePackage package)
+        public async Task<string> RequestPackageVersion(ResourcePackage package)
         {
-            var operation = new WeakOnlineRequestPackageVersionHelper(package);
-            operation.StartOperation();
-            return operation;
+            var operation = package.RequestPackageVersionAsync();
+            await operation;
+
+            if (operation.Status == EOperationStatus.Succeeded)
+            {
+                PlayerPrefs.SetString(package.PackageName + "_GAME_VERSION", operation.PackageVersion);
+                return operation.PackageVersion;
+            }
+            else
+            {
+                Debug.LogError($"Failed to request package version: {operation.Error}");
+                return PlayerPrefs.GetString(package.PackageName + "_GAME_VERSION", string.Empty);
+            }
         }
     }
 }
-
-

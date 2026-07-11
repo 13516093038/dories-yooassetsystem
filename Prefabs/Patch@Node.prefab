@@ -44,5 +44,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b835a7048067415b88b7ec772215e82, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_PlayMode: 0
-  packagesNameList: []
+  iLog: Dories.YooAssetSystem.Runtime.LogSystem.BuildInLogEntity
+  isAutoDownload: 0
+  isReleaseMode: 0
+  playMode: 0
+  packagesInfoList:
+  - packageName: TestPackage1
+    isSupportWeakOnline: 0
+    remoteService: 
+    bundleDecryptor: 
+    timeout: 60
+    clearCacheBundleInfo:
+      mode: 0
+      locations: []
+      tags: []
+    downloadingMaxNum: 10
+    failedTryAgainTimes: 3
+    isCombineDownloader: 0
+    downloadTags: []
+  - packageName: TestPackage2
+    isSupportWeakOnline: 0
+    remoteService: 
+    bundleDecryptor: 
+    timeout: 60
+    clearCacheBundleInfo:
+      mode: 0
+      locations: []
+      tags: []
+    downloadingMaxNum: 10
+    failedTryAgainTimes: 3
+    isCombineDownloader: 0
+    downloadTags: []

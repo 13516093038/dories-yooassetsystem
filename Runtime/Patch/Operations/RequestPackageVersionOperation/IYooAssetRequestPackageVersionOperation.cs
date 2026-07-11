@@ -1,9 +1,10 @@
+using System.Threading.Tasks;
 using YooAsset;
 
-namespace Dories.YooassetSystem.Runtime.Patch.Operations.RequestPackageVersionOperation
+namespace Dories.YooAssetSystem.Runtime.Patch.Operations
 {
     public interface IYooAssetRequestPackageVersionOperation
     {
-        YooAsset.RequestPackageVersionOperation RequestPackageVersion(ResourcePackage package);
+        Task<string> RequestPackageVersion(ResourcePackage package);
     }
 }
