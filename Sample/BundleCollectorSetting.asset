@@ -30,7 +30,7 @@ MonoBehaviour:
       AssetTags: Test
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: Packages/com.dories.yooassetsystem/Test/Res/Prefabs/Cube.prefab
+      - CollectPath: Packages/com.dories.yooassetsystem/Sample/Res/Prefabs/Cube.prefab
         CollectorGUID: 1b13ceea74c469647a3deeb48aa1507c
         CollectorType: 0
         AddressRuleName: AddressByFileName
@@ -38,7 +38,7 @@ MonoBehaviour:
         FilterRuleName: CollectAll
         AssetTags: Test1
         UserData: 
-      - CollectPath: Packages/com.dories.yooassetsystem/Test/Res/Prefabs/Sphere.prefab
+      - CollectPath: Packages/com.dories.yooassetsystem/Sample/Res/Prefabs/Sphere.prefab
         CollectorGUID: 9e53e59a7089ddd4f9dc0495cd76cac2
         CollectorType: 0
         AddressRuleName: AddressByFileName
