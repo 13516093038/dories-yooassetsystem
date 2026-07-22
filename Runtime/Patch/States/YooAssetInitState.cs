@@ -77,7 +77,8 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
                 var operation = initOperation.Initialize(
                     package,
                     packageInfo.RemoteService,
-                    packageInfo.BundleDecryptor);
+                    packageInfo.BundleDecryptor,
+                    packageInfo.EditorVirtualType);
                 await operation;
 
                 if (operation.Status != EOperationStatus.Succeeded)

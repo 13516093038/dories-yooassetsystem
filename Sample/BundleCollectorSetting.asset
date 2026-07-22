@@ -27,24 +27,32 @@ MonoBehaviour:
     Groups:
     - GroupName: Default Group
       GroupDesc: 
-      AssetTags: Test
+      AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
       - CollectPath: Packages/com.dories.yooassetsystem/Sample/Res/Prefabs/Cube.prefab
         CollectorGUID: 1b13ceea74c469647a3deeb48aa1507c
         CollectorType: 0
         AddressRuleName: AddressByFileName
-        PackRuleName: PackSeparately
+        PackRuleName: PackDirectory
         FilterRuleName: CollectAll
-        AssetTags: Test1
+        AssetTags: 
         UserData: 
       - CollectPath: Packages/com.dories.yooassetsystem/Sample/Res/Prefabs/Sphere.prefab
         CollectorGUID: 9e53e59a7089ddd4f9dc0495cd76cac2
         CollectorType: 0
         AddressRuleName: AddressByFileName
-        PackRuleName: PackSeparately
+        PackRuleName: PackDirectory
         FilterRuleName: CollectAll
-        AssetTags: Test2
+        AssetTags: 
+        UserData: 
+      - CollectPath: Packages/com.dories.yooassetsystem/Sample/AssetLoadScene.unity
+        CollectorGUID: c608338b5bcfbcb40bd201da3272c268
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackDirectory
+        FilterRuleName: CollectAll
+        AssetTags: 
         UserData: 
   - PackageName: TestPackage2
     PackageDesc: 
@@ -60,11 +68,11 @@ MonoBehaviour:
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: Assets/BitGem
-        CollectorGUID: 0413ddae93f114f04b06c3429b7ca639
+      - CollectPath: Packages/com.dories.yooassetsystem/Sample/Res/RawFile
+        CollectorGUID: 1e8a4873602dc4d20ab8dbac24757346
         CollectorType: 0
         AddressRuleName: AddressByFileName
         PackRuleName: PackCollector
-        FilterRuleName: CollectPrefab
+        FilterRuleName: CollectAll
         AssetTags: 
         UserData: 

@@ -1,5 +1,5 @@
 {
-    "name": "Dories.YooassetSystem.Patch.Test",
+    "name": "Dories.YooassetSystem.Patch.Sample",
     "rootNamespace": "",
     "references": [
         "GUID:e34a5702dd353724aa315fb8011f08c3",

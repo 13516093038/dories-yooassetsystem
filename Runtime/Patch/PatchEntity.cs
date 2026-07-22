@@ -16,6 +16,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         public class PackageInfo
         {
             [SerializeField] private string packageName;
+            [SerializeField] private EditorVirtualType editorVirtualType;
             [SerializeField] private bool isSupportWeakOnline = false;
             [SerializeField] private string remoteService = string.Empty;
             [SerializeField] private string bundleDecryptor = string.Empty;
@@ -27,6 +28,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             [SerializeField] private string[] downloadTags;
 
             public string PackageName => packageName;
+            public EditorVirtualType EditorVirtualType => editorVirtualType;
             public bool IsSupportWeakOnline => isSupportWeakOnline;
             public string RemoteServiceTypeName => remoteService;
             public string BundleDecryptorTypeName => bundleDecryptor;

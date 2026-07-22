@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 #else
 using System.Threading.Tasks;
 #endif
+using Dories.YooassetSystem.Runtime.AssetLoader;
 using Dories.YooAssetSystem.Runtime.LogSystem;
 using UnityEngine.SceneManagement;
 using YooAsset;
@@ -22,10 +23,15 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             _loadingTasker = new LoadingTasker(logger);
         }
 
+        /// <summary>
+        /// 异步加载场景。
+        /// allowSceneActivation=true：等到场景激活完成再返回；
+        /// allowSceneActivation=false：等到可激活（进度约 0.9）即返回，业务再调用 SceneLoadResult.ActivateAsync。
+        /// </summary>
 #if DORIES_UNITASK_SUPPORT
-        public async UniTask<SceneHandle> LoadSceneAsync(
+        public async UniTask<SceneLoadResult> LoadSceneAsync(
 #else
-        public async Task<SceneHandle> LoadSceneAsync(
+        public async Task<SceneLoadResult> LoadSceneAsync(
 #endif
             string sceneLocation,
             LoadSceneMode sceneMode = LoadSceneMode.Single,
@@ -43,9 +49,9 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             {
                 _logger.Debug($"[AssetLoader] Scene: {sceneLocation} is loading, waiting for existing task...");
 #if DORIES_UNITASK_SUPPORT
-                var source = (UniTaskCompletionSource<SceneHandle>)existingTask;
+                var source = (UniTaskCompletionSource<SceneLoadResult>)existingTask;
 #else
-                var source = (TaskCompletionSource<SceneHandle>)existingTask;
+                var source = (TaskCompletionSource<SceneLoadResult>)existingTask;
 #endif
                 return await source.Task;
             }
@@ -55,13 +61,13 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                 && cachedHandle.IsValid)
             {
                 _logger.Debug($"[AssetLoader] Scene: {sceneLocation} loaded from cache");
-                return cachedHandle;
+                return new SceneLoadResult(sceneLocation, cachedHandle);
             }
 
 #if DORIES_UNITASK_SUPPORT
-            var completionSource = new UniTaskCompletionSource<SceneHandle>();
+            var completionSource = new UniTaskCompletionSource<SceneLoadResult>();
 #else
-            var completionSource = new TaskCompletionSource<SceneHandle>();
+            var completionSource = new TaskCompletionSource<SceneLoadResult>();
 #endif
             _loadingTasker.TryAddLoadingTask(sceneLocation, completionSource);
 
@@ -71,20 +77,40 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                     _cacheDic.Clear();
 
                 var handle = _package.LoadSceneAsync(sceneLocation, sceneMode, physicsMode, allowSceneActivation, priority);
-                await handle;
 
-                if (handle.Status != EOperationStatus.Succeeded)
+                if (allowSceneActivation)
                 {
-                    var error = string.IsNullOrEmpty(handle.Error)
-                        ? $"Load scene failed: {sceneLocation}"
-                        : handle.Error;
-                    throw new Exception(error);
+                    await handle;
+
+                    if (handle.Status != EOperationStatus.Succeeded)
+                    {
+                        var error = string.IsNullOrEmpty(handle.Error)
+                            ? $"Load scene failed: {sceneLocation}"
+                            : handle.Error;
+                        throw new Exception(error);
+                    }
+                }
+                else
+                {
+                    await WaitUntilSceneReady(handle);
+
+                    if (handle.Status == EOperationStatus.Failed)
+                    {
+                        var error = string.IsNullOrEmpty(handle.Error)
+                            ? $"Load scene failed: {sceneLocation}"
+                            : handle.Error;
+                        throw new Exception(error);
+                    }
                 }
 
                 _cacheDic[sceneLocation] = handle;
-                completionSource.TrySetResult(handle);
-                _logger.Debug($"[AssetLoader] Scene: {sceneLocation} loaded successfully");
-                return handle;
+                var result = new SceneLoadResult(sceneLocation, handle);
+                completionSource.TrySetResult(result);
+                _logger.Debug(
+                    allowSceneActivation
+                        ? $"[AssetLoader] Scene: {sceneLocation} loaded and activated"
+                        : $"[AssetLoader] Scene: {sceneLocation} ready for activation, progress: {handle.Progress}");
+                return result;
             }
             catch (Exception e)
             {
@@ -95,6 +121,31 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             finally
             {
                 _loadingTasker.TryRemoveLoadingTask(sceneLocation);
+            }
+        }
+
+        /// <summary>
+        /// 等待场景加载到可激活状态（Unity 在 allowSceneActivation=false 时进度停在约 0.9）
+        /// </summary>
+#if DORIES_UNITASK_SUPPORT
+        private static async UniTask WaitUntilSceneReady(SceneHandle handle)
+#else
+        private static async Task WaitUntilSceneReady(SceneHandle handle)
+#endif
+        {
+            while (handle.IsValid && !handle.IsDone)
+            {
+                if (handle.Status == EOperationStatus.Failed)
+                    return;
+
+                if (handle.Progress >= 0.9f)
+                    return;
+
+#if DORIES_UNITASK_SUPPORT
+                await UniTask.Yield();
+#else
+                await Task.Yield();
+#endif
             }
         }
 

@@ -88,6 +88,7 @@ namespace Dories.YooAssetSystem.Editor.Inspector
                  newElement.FindPropertyRelative("timeout").intValue = DefaultTimeout;
                  newElement.FindPropertyRelative("downloadingMaxNum").intValue = DefaultDownloadingMaxNum;
                  newElement.FindPropertyRelative("failedTryAgainTimes").intValue = DefaultFailedTryAgainTimes;
+                 newElement.FindPropertyRelative("editorVirtualType").enumValueIndex = (int)EditorVirtualType.VirttualAssetBundle;
              }
 
              for (int i = 0; i < _packagesInfoListProp.arraySize; i++)
@@ -109,6 +110,13 @@ namespace Dories.YooAssetSystem.Editor.Inspector
                      EditorGUI.BeginDisabledGroup(true);
                      EditorGUILayout.TextField("Package Name", packageName);
                      EditorGUI.EndDisabledGroup();
+
+                    if(!_isReleaseModeProp.boolValue)
+                    {
+                        var editorVirtualTypeProp = element.FindPropertyRelative("editorVirtualType");
+                        EditorGUILayout.PropertyField(editorVirtualTypeProp);
+                    }
+
                      // 只在 HostPlayMode 下显示
                      if (playMode is PlayMode.HostPlayMode)
                      {

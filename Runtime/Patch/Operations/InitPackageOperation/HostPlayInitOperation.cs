@@ -8,14 +8,15 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
     public class HostPlayInitOperation : IYooAssetInitOperation
     {
         public InitializePackageOperation Initialize(ResourcePackage package, IRemoteService remoteServices,
-            IBundleDecryptor bundleDecryptor = null)
+            IBundleDecryptor bundleDecryptor = null,
+            EditorVirtualType editorVirtualType = EditorVirtualType.VirttualAssetBundle)
         {
             var cacheFileSystemParams = FileSystemParameters.CreateDefaultSandboxFileSystemParameters(remoteServices);
             cacheFileSystemParams.AddParameter(EFileSystemParameter.InstallCleanupMode, EInstallCleanupMode.None);
-            
+
             var builtinFileSystemParams = FileSystemParameters.CreateDefaultBuiltinFileSystemParameters();
             builtinFileSystemParams.AddParameter(EFileSystemParameter.CopyBuiltinPackageManifest, true);
-        
+
             if (bundleDecryptor != null)
             {
                 builtinFileSystemParams.AddParameter(EFileSystemParameter.AssetBundleDecryptor, bundleDecryptor);
@@ -23,7 +24,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
             }
 
             var createParameters = new HostPlayModeOptions();
-            
+
             createParameters.BuiltinFileSystemParameters = builtinFileSystemParams;
             createParameters.CacheFileSystemParameters = cacheFileSystemParams;
 

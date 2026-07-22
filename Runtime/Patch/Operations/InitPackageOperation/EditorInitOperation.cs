@@ -8,10 +8,11 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
     public class EditorInitOperation : IYooAssetInitOperation
     {
         public InitializePackageOperation Initialize(ResourcePackage package, IRemoteService remoteServices,
-            IBundleDecryptor bundleDecryptor = null)
+            IBundleDecryptor bundleDecryptor = null,
+            EditorVirtualType editorVirtualType = EditorVirtualType.VirttualAssetBundle)
         {
             var buildResult =
-                EditorSimulateBuildInvoker.Build(package.PackageName, (int)EBundleType.VirtualAssetBundle);
+                EditorSimulateBuildInvoker.Build(package.PackageName, (int)editorVirtualType);
             var packageRoot = buildResult.PackageRootDirectory;
             var createParameters = new EditorSimulateModeOptions();
             createParameters.EditorFileSystemParameters =

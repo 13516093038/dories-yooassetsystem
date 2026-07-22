@@ -8,7 +8,8 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
     public class OfflineInitOperation : IYooAssetInitOperation
     {
         public InitializePackageOperation Initialize(ResourcePackage package, IRemoteService remoteServices,
-            IBundleDecryptor bundleDecryptor = null)
+            IBundleDecryptor bundleDecryptor = null,
+            EditorVirtualType editorVirtualType = EditorVirtualType.VirttualAssetBundle)
         {
             var builtinFileSystemParams = FileSystemParameters.CreateDefaultBuiltinFileSystemParameters();
 

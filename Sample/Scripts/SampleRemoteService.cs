@@ -3,7 +3,7 @@ using YooAsset;
 
 namespace Patch.Test.Scripts
 {
-    public class TestRemoteService : IRemoteService
+    public class SampleRemoteService : IRemoteService
     {
         private readonly string RemoteUrl = "https://cdn.zongyigame.com/wx/SoccerStar/TT/1.0.9/Test/Test/";
         

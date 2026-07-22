@@ -65,14 +65,21 @@ public class PatchSample : MonoBehaviour
             {
                 Debug.Log("Patch complete");
                 PatchPanel.SetActive(false);
+                StartLoadNextScene();
             })
             .BuildPatchFailedListener(error => { Debug.Log("Patch failed: " + error); })
             .BuildPatchErrorListener(error => { Debug.Log("Patch error: " + error); })
             .StartPatch();
     }
 
-    private void StartLoadNextScene()
+    private async void StartLoadNextScene()
     {
-        //assetLoaderEntity.load
+        // allowSceneActivation=false：先加载到可激活，再主动激活切换
+        var result = await assetLoaderEntity.LoadSceneAsync("TestPackage1",
+            "Packages/com.dories.yooassetsystem/Sample/AssetLoadScene.unity",
+            allowSceneActivation: false);
+
+        await result.ActivateAsync();
+        result.SetAsActiveScene();
     }
 }

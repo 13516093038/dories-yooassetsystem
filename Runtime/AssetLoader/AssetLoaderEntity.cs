@@ -181,9 +181,9 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         }
 
 #if DORIES_UNITASK_SUPPORT
-        public async UniTask<SceneHandle> LoadSceneAsync(
+        public async UniTask<SceneLoadResult> LoadSceneAsync(
 #else
-        public async Task<SceneHandle> LoadSceneAsync(
+        public async Task<SceneLoadResult> LoadSceneAsync(
 #endif
             string sceneLocation,
             LoadSceneMode sceneMode = LoadSceneMode.Single,
@@ -211,9 +211,9 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         }
 
 #if DORIES_UNITASK_SUPPORT
-        public async UniTask<SceneHandle> LoadSceneAsync(
+        public async UniTask<SceneLoadResult> LoadSceneAsync(
 #else
-        public async Task<SceneHandle> LoadSceneAsync(
+        public async Task<SceneLoadResult> LoadSceneAsync(
 #endif
             string packageName,
             string sceneLocation,
@@ -275,6 +275,28 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
                 _ = group.UnloadSceneAsync(sceneLocation);
 #endif
             }
+        }
+
+        /// <summary>
+        /// 按加载结果卸载场景
+        /// </summary>
+        public void UnloadScene(SceneLoadResult result)
+        {
+            if (result == null || string.IsNullOrEmpty(result.Location))
+                return;
+
+            UnloadScene(result.Location);
+        }
+
+        /// <summary>
+        /// 按包名与加载结果卸载场景
+        /// </summary>
+        public void UnloadScene(string packageName, SceneLoadResult result)
+        {
+            if (result == null || string.IsNullOrEmpty(result.Location))
+                return;
+
+            UnloadScene(packageName, result.Location);
         }
 
         #endregion
