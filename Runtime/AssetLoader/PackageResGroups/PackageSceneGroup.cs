@@ -71,10 +71,18 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
 #endif
             _loadingTasker.TryAddLoadingTask(sceneLocation, completionSource);
 
+#if UNITY_EDITOR
+            var loadTime = DateTime.Now;
+#endif
             try
             {
                 if (sceneMode == LoadSceneMode.Single)
+                {
                     _cacheDic.Clear();
+#if UNITY_EDITOR
+                    _packageResLoadViewInfo.SceneLoadInfos.Clear();
+#endif
+                }
 
                 var handle = _package.LoadSceneAsync(sceneLocation, sceneMode, physicsMode, allowSceneActivation, priority);
 
@@ -110,6 +118,16 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                     allowSceneActivation
                         ? $"[AssetLoader] Scene: {sceneLocation} loaded and activated"
                         : $"[AssetLoader] Scene: {sceneLocation} ready for activation, progress: {handle.Progress}");
+
+#if UNITY_EDITOR
+                var costTime = (float)DateTime.Now.Subtract(loadTime).TotalMilliseconds;
+                _packageResLoadViewInfo.SceneLoadInfos[sceneLocation] = new ResLoadInfo
+                {
+                    LoadTime = costTime,
+                    RefCount = 0
+                };
+#endif
+
                 return result;
             }
             catch (Exception e)
@@ -183,6 +201,9 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             }
 
             _cacheDic.Remove(sceneLocation);
+#if UNITY_EDITOR
+            _packageResLoadViewInfo.SceneLoadInfos.Remove(sceneLocation);
+#endif
             _logger.Debug($"[AssetLoader] Scene: {sceneLocation} unloaded successfully");
         }
     }

@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 #else
 using System.Threading.Tasks;
 #endif
+using Dories.YooassetSystem.Runtime.AssetLoader;
 using Dories.YooAssetSystem.Runtime.LogSystem;
 using YooAsset;
 
@@ -50,13 +51,21 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
 #endif
                 var rawFile = await source.Task;
                 if (rawFile != null)
+                {
                     _refCountDic[location]++;
+#if UNITY_EDITOR
+                    SyncRawFileRefCount(location);
+#endif
+                }
                 return rawFile;
             }
 
             if (_cacheDic.TryGetValue(location, out var handle) && handle.IsValid)
             {
                 _refCountDic[location]++;
+#if UNITY_EDITOR
+                SyncRawFileRefCount(location);
+#endif
                 return handle.GetAssetObject<RawFileObject>();
             }
 
@@ -67,6 +76,9 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
 #endif
             _loadingTasker.TryAddLoadingTask(location, completionSource);
 
+#if UNITY_EDITOR
+            var loadTime = DateTime.Now;
+#endif
             try
             {
                 handle = _package.LoadAssetAsync<RawFileObject>(location, priority);
@@ -86,6 +98,16 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                 completionSource.TrySetResult(rawFileObject);
                 _logger.Debug(
                     $"[AssetLoader] RawFile: {location} loaded successfully, ref count: {_refCountDic[location]}");
+
+#if UNITY_EDITOR
+                var costTime = (float)DateTime.Now.Subtract(loadTime).TotalMilliseconds;
+                _packageResLoadViewInfo.RawFileLoadInfos[location] = new ResLoadInfo
+                {
+                    LoadTime = costTime,
+                    RefCount = _refCountDic[location]
+                };
+#endif
+
                 return rawFileObject;
             }
             catch (Exception e)
@@ -157,6 +179,10 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                 _cacheDic.Remove(location);
                 _refCountDic.Remove(location);
 
+#if UNITY_EDITOR
+                _packageResLoadViewInfo.RawFileLoadInfos.Remove(location);
+#endif
+
                 if (handle.IsValid)
                     handle.Release();
 
@@ -165,6 +191,9 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             }
             else
             {
+#if UNITY_EDITOR
+                SyncRawFileRefCount(location);
+#endif
                 _logger.Debug(
                     $"[AssetLoader] RawFile: {location} ref count decreased to {_refCountDic[location]}");
             }
@@ -183,5 +212,16 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             foreach (var forceUnload in pendingList)
                 UnloadRawFileCore(location, forceUnload);
         }
+
+#if UNITY_EDITOR
+        private void SyncRawFileRefCount(string location)
+        {
+            if (!_packageResLoadViewInfo.RawFileLoadInfos.TryGetValue(location, out var info))
+                return;
+
+            info.RefCount = _refCountDic[location];
+            _packageResLoadViewInfo.RawFileLoadInfos[location] = info;
+        }
+#endif
     }
 }

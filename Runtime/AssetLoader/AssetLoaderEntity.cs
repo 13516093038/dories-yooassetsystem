@@ -500,5 +500,58 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         }
 
         #endregion
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// 收集各资源 Group 的加载监视信息（Editor 用）。
+        /// </summary>
+        public void GetAssetGroupCacheLoadInfo(List<PackageResLoadViewInfo> dest)
+        {
+            if (dest == null)
+                return;
+
+            dest.Clear();
+            var merged = new Dictionary<string, PackageResLoadViewInfo>();
+
+            void MergeGroup(PackageResGroup group)
+            {
+                var src = group.GetResLoadViewInfo();
+                if (!src.HasAnyEntry())
+                    return;
+
+                if (!merged.TryGetValue(src.PackageName, out var combined))
+                {
+                    merged[src.PackageName] = src;
+                    return;
+                }
+
+                MergeLoadInfos(combined.ResLoadInfos, src.ResLoadInfos);
+                MergeLoadInfos(combined.SceneLoadInfos, src.SceneLoadInfos);
+                MergeLoadInfos(combined.RawFileLoadInfos, src.RawFileLoadInfos);
+                merged[src.PackageName] = combined;
+            }
+
+            foreach (var group in _packageAssetGroupDic.Values)
+                MergeGroup(group);
+            foreach (var group in _packageSceneGroupDic.Values)
+                MergeGroup(group);
+            foreach (var group in _packageRawFileGroupDic.Values)
+                MergeGroup(group);
+
+            foreach (var pair in merged)
+                dest.Add(pair.Value);
+        }
+
+        private static void MergeLoadInfos(
+            Dictionary<string, ResLoadInfo> dest,
+            Dictionary<string, ResLoadInfo> src)
+        {
+            if (src == null || src.Count == 0)
+                return;
+
+            foreach (var pair in src)
+                dest[pair.Key] = pair.Value;
+        }
+#endif
     }
 }

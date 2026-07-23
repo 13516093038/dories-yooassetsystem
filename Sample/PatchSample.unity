@@ -1092,6 +1092,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2033109411}
     m_Modifications:
+    - target: {fileID: 479511407717181717, guid: bf2c70e646c6149cd816a76dbffffeb1,
+        type: 3}
+      propertyPath: ILog
+      value: Dories.YooAssetSystem.Runtime.LogSystem.BuildInLogEntity
+      objectReference: {fileID: 0}
     - target: {fileID: 2136264669691001698, guid: bf2c70e646c6149cd816a76dbffffeb1,
         type: 3}
       propertyPath: m_LocalPosition.x

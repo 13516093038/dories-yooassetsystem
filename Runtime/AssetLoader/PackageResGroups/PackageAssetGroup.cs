@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+#if DORIES_UNITASK_SUPPORT
 using Cysharp.Threading.Tasks;
+#else
+using System.Threading.Tasks;
+#endif
 using Dories.YooAssetSystem.Runtime.LogSystem;
 using YooAsset;
 using Object = UnityEngine.Object;
@@ -51,6 +55,9 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                 if (asset != null)
                 {
                     _refCountDic[assetName]++;
+#if UNITY_EDITOR
+                    SyncResLoadRefCount(assetName);
+#endif
                 }
 
                 return asset as T;
@@ -60,6 +67,9 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             if (_cacheDic.TryGetValue(assetName, out HandleBase handle))
             {
                 _refCountDic[assetName]++;
+#if UNITY_EDITOR
+                SyncResLoadRefCount(assetName);
+#endif
                 return ((AssetHandle)handle).AssetObject as T;
             }
             else
@@ -72,6 +82,9 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
 #endif
                 _loadingTasker.TryAddLoadingTask(assetName, completionSource);
 
+#if UNITY_EDITOR
+                DateTime loadTime = DateTime.Now;
+#endif
                 try
                 {
                     handle = _package.LoadAssetAsync<T>(assetName, priority);
@@ -82,6 +95,16 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                     completionSource.TrySetResult(asset);
                     _logger.Debug(
                         $"[AssetLoader] Asset: {assetName} loaded successfully, ref count: {_refCountDic[assetName]}");
+
+#if UNITY_EDITOR
+                    float costTime = (float)DateTime.Now.Subtract(loadTime).TotalMilliseconds;    
+                    var resLoadInfo = new ResLoadInfo();
+                    resLoadInfo.LoadTime = costTime;
+                    resLoadInfo.RefCount = _refCountDic[assetName];
+                    _packageResLoadViewInfo.ResLoadInfos.Add(assetName, resLoadInfo);
+#endif
+
+
                     return asset;
                 }
                 catch (Exception e)
@@ -153,9 +176,19 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                     _cacheDic.Remove(assetName);
                     _refCountDic.Remove(assetName);
 
+#if UNITY_EDITOR
+                    RemoveResLoadInfo(assetName);
+#endif
+
                     handle.Release();
                     _package.TryUnloadUnusedAsset(assetName);
                 }
+#if UNITY_EDITOR
+                else
+                {
+                    SyncResLoadRefCount(assetName);
+                }
+#endif
             }
         }
 
@@ -185,5 +218,21 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             _logger.Debug($"[AssetLoader] Retrieved {pendingList.Count} pending unloads for: {assetName}");
             return pendingList;
         }
+
+#if UNITY_EDITOR
+        private void SyncResLoadRefCount(string assetName)
+        {
+            if (!_packageResLoadViewInfo.ResLoadInfos.TryGetValue(assetName, out var info))
+                return;
+
+            info.RefCount = _refCountDic[assetName];
+            _packageResLoadViewInfo.ResLoadInfos[assetName] = info;
+        }
+
+        private void RemoveResLoadInfo(string assetName)
+        {
+            _packageResLoadViewInfo.ResLoadInfos.Remove(assetName);
+        }
+#endif
     }
 }
