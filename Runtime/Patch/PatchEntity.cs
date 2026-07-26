@@ -85,7 +85,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         private void Awake()
         {
             _logger = CreateLog(iLog);
-
+            
             foreach (var packageInfo in packagesInfoList)
             {
                 packageInfo.RemoteService = CreateRemoteService(packageInfo.RemoteServiceTypeName);

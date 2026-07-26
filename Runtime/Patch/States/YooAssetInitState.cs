@@ -25,7 +25,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
 #endif
         {
             // 创建资源包裹类
-            YooAssets.Initialize();
+            YooAssets.Initialize(_logger);
             foreach (var packageInfo in _owner.packagesInfoList)
             {
                 ResourcePackage package;
