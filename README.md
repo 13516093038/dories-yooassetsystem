@@ -7,14 +7,10 @@
 在 Unity `Packages/manifest.json` 中加入：
 
 ```json
-"com.dories.yooassetsystem": "https://github.com/13516093038/dories-yooassetsystem.git#v1.0.0",
-"com.dories.fsm": "https://github.com/13516093038/dories-FSM.git#v1.1.0",
-"com.dories.componentization": "https://github.com/13516093038/dories-componentization.git#v1.0.0",
-"com.dories.reference": "https://github.com/13516093038/dories-reference.git#v1.0.0",
-"com.tuyoogame.yooasset": "https://github.com/tuyoogame/YooAsset.git#3.0.5"
+"com.dories.yooassetsystem": "https://github.com/13516093038/dories-yooassetsystem.git#split/yooassetsystem"
 ```
 
-通过 Git URL 安装时，传递依赖不会自动解析，需同时声明上述依赖。安装 UniTask 后会自动启用 `DORIES_UNITASK_SUPPORT`。
+本包不声明 UPM 传递依赖。工程中需要自行放入 YooAsset（asmdef 按 GUID 引用）。安装 UniTask 后会自动启用 `DORIES_UNITASK_SUPPORT`。
 
 ## 功能
 

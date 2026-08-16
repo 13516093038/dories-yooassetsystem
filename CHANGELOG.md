@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1] - 2026-08-16
+
+### Fixed
+
+- 移除未使用的 UPM 依赖（`componentization` / `reference` / `fsm` / `yooasset`），避免 Git URL 安装时 Package Manager 去 Registry 解析失败
+
 ## [1.0.0] - 2026-08-16
 
 ### Added

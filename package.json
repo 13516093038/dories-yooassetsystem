@@ -1,7 +1,7 @@
 {
     "name": "com.dories.yooassetsystem",
     "displayName": "Dories YooAssetSystem",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "unity": "2022.3",
     "description": "基于 YooAsset 的热更补丁与资源加载运行时模块，支持多 PlayMode、编辑器检视器与示例。",
     "author": {
@@ -29,10 +29,5 @@
             "path": "Sample"
         }
     ],
-    "dependencies": {
-        "com.dories.componentization": "1.0.0",
-        "com.dories.reference": "1.0.0",
-        "com.dories.fsm": "1.0.0",
-        "com.tuyoogame.yooasset": "3.0.5"
-    }
+    "dependencies": {}
 }
