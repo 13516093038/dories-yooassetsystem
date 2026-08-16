@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-08-16
+
+### Fixed
+
+- Unity 6 下 `SceneHandle` 与 `UnityEngine.SceneManagement.SceneHandle` 重名导致编译失败，改为显式使用 `YooAsset.SceneHandle`
+
 ## [1.0.1] - 2026-08-16
 
 ### Fixed

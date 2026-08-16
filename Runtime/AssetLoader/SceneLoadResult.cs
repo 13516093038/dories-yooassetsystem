@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 #endif
 using UnityEngine.SceneManagement;
 using YooAsset;
+// Unity 6 起 SceneManagement 也有 SceneHandle，与 YooAsset 重名，这里固定指向 YooAsset。
+using SceneHandle = YooAsset.SceneHandle;
 
 namespace Dories.YooassetSystem.Runtime.AssetLoader
 {
