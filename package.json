@@ -1,23 +1,38 @@
 {
-  "name": "com.dories.yooassetsystem",
-  "displayName": "Dories YooassetSystem",
-  "version": "0.0.4",
-  "unity": "2022.3",
-  "description": "Dories YooAsset-based patch and asset loading system.",
-  "author": {
-    "name": "Dories"
-  },
-  "samples": [
-    {
-      "displayName": "Patch And AssetsLoad Samples",
-      "description": "Patch And AssetsLoad 示例场景与脚本。",
-      "path": "Samples~"
+    "name": "com.dories.yooassetsystem",
+    "displayName": "Dories YooAssetSystem",
+    "version": "1.0.0",
+    "unity": "2022.3",
+    "description": "基于 YooAsset 的热更补丁与资源加载运行时模块，支持多 PlayMode、编辑器检视器与示例。",
+    "author": {
+        "name": "Dories"
+    },
+    "keywords": [
+        "yooasset",
+        "patch",
+        "assetloader",
+        "hotfix",
+        "minigame"
+    ],
+    "license": "MIT",
+    "changelogUrl": "https://github.com/13516093038/dories-yooassetsystem/blob/split/yooassetsystem/CHANGELOG.md",
+    "documentationUrl": "https://github.com/13516093038/dories-yooassetsystem/blob/split/yooassetsystem/README.md",
+    "licensesUrl": "https://github.com/13516093038/dories-yooassetsystem/blob/split/yooassetsystem/LICENSE.md",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/13516093038/dories-yooassetsystem.git"
+    },
+    "samples": [
+        {
+            "displayName": "Patch And AssetLoad Samples",
+            "description": "热更补丁与资源加载示例场景、脚本与测试资源。",
+            "path": "Sample"
+        }
+    ],
+    "dependencies": {
+        "com.dories.componentization": "1.0.0",
+        "com.dories.reference": "1.0.0",
+        "com.dories.fsm": "1.0.0",
+        "com.tuyoogame.yooasset": "3.0.5"
     }
-  ],
-  "dependencies": {
-    "com.dories.componentization": "1.0.0",
-    "com.dories.reference": "1.0.0",
-    "com.dories.fsm": "1.0.0",
-    "com.tuyoogame.yooasset": "2.3.18"
-  }
 }
