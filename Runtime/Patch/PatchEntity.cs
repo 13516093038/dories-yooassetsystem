@@ -84,6 +84,11 @@ namespace Dories.YooAssetSystem.Runtime.Patch
 
         private void Awake()
         {
+            if(playMode == PlayMode.OfflinePlayMode)
+            {
+                isAutoDownload = true;
+            }
+
             _logger = CreateLog(iLog);
             
             foreach (var packageInfo in packagesInfoList)

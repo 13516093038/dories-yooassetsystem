@@ -26,7 +26,7 @@
         {
             "displayName": "Patch And AssetLoad Samples",
             "description": "热更补丁与资源加载示例场景、脚本与测试资源。",
-            "path": "Sample"
+            "path": "Sample~"
         }
     ],
     "dependencies": {}
