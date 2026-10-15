@@ -9,6 +9,12 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
     {
         protected internal override void OnEnter()
         {
+            if (_owner.isAutoDownload)
+            {
+                _owner._patchDowner.BuildDownloaders();
+                _owner._patchDowner.StartDownload();
+            }
+
             _owner._patchDowner._allPackageDownloadCompleted = ChangeState<YooAssetDownloadFileOverState>;
             _owner._patchDowner._onDownloadFailed = error =>
             {

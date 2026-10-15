@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Dories.YooAssetSystem.Runtime.LogSystem;
 
@@ -72,6 +73,28 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
                 _LoadingTasks.Remove(assetName);
                 _logger.Debug($"[AssetLoader] Removing loading flag: {assetName}.");
             }
+        }
+    }
+
+    internal sealed class LoadGate
+    {
+        private readonly List<Action<Object, Exception>> _waiters = new();
+
+        public void AddWaiter(Action<Object, Exception> waiter)
+        {
+            _waiters.Add(waiter);
+        }
+
+        public void SetResult(Object asset)
+        {
+            foreach (var waiter in _waiters)
+                waiter(asset, null);
+        }
+        
+        public void SetException(Exception exception)
+        {
+            foreach (var waiter in _waiters)
+                waiter(null, exception);
         }
     }
 }

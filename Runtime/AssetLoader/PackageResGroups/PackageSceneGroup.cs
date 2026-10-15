@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 #else
 using System.Threading.Tasks;
 #endif
-using Dories.YooassetSystem.Runtime.AssetLoader;
 using Dories.YooAssetSystem.Runtime.LogSystem;
 using UnityEngine.SceneManagement;
 using YooAsset;
@@ -50,12 +49,20 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             if (_loadingTasker.TryGetLoadingTask(sceneLocation, out var existingTask))
             {
                 _logger.Debug($"[AssetLoader] Scene: {sceneLocation} is loading, waiting for existing task...");
+                var gate = (LoadGate)existingTask;
 #if DORIES_UNITASK_SUPPORT
-                var source = (UniTaskCompletionSource<SceneLoadResult>)existingTask;
+                var mine = new UniTaskCompletionSource<SceneLoadResult>();
 #else
-                var source = (TaskCompletionSource<SceneLoadResult>)existingTask;
+                var mine = new TaskCompletionSource<SceneLoadResult>();
 #endif
-                return await source.Task;
+                gate.AddWaiter((sceneLoadResult, exception) =>
+                {
+                    if (exception != null)
+                        mine.TrySetException(exception);
+                    else
+                        mine.TrySetResult(sceneLoadResult as SceneLoadResult);
+                });
+                return await mine.Task;
             }
 
             if (sceneMode == LoadSceneMode.Additive
@@ -66,12 +73,8 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                 return new SceneLoadResult(sceneLocation, cachedHandle);
             }
 
-#if DORIES_UNITASK_SUPPORT
-            var completionSource = new UniTaskCompletionSource<SceneLoadResult>();
-#else
-            var completionSource = new TaskCompletionSource<SceneLoadResult>();
-#endif
-            _loadingTasker.TryAddLoadingTask(sceneLocation, completionSource);
+            var loadGate = new LoadGate();
+            _loadingTasker.TryAddLoadingTask(sceneLocation, loadGate);
 
 #if UNITY_EDITOR
             var loadTime = DateTime.Now;
@@ -115,7 +118,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
 
                 _cacheDic[sceneLocation] = handle;
                 var result = new SceneLoadResult(sceneLocation, handle);
-                completionSource.TrySetResult(result);
+                loadGate.SetResult(result);
                 _logger.Debug(
                     allowSceneActivation
                         ? $"[AssetLoader] Scene: {sceneLocation} loaded and activated"
@@ -135,7 +138,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             catch (Exception e)
             {
                 _logger.Error($"[AssetLoader] Scene: {sceneLocation} loaded failed, error: {e}");
-                completionSource.TrySetException(e);
+                loadGate.SetException(e);
                 throw;
             }
             finally

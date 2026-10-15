@@ -6,7 +6,14 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
     {
         protected internal override void OnEnter()
         {
-            CreateDownloaderTask();
+            if (!_owner.isReleaseMode || _owner.playMode == PlayMode.OfflinePlayMode)
+            {
+                ChangeState<YooAssetDownloadFileOverState>();
+            }
+            else
+            {
+                CreateDownloaderTask();
+            }
         }
 
         private void CreateDownloaderTask()
@@ -16,11 +23,6 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
             _owner._needUpdateListener?.Invoke(patchDownloader);
             
             ChangeState<YooAssetDownloadPackageFilesState>();
-            if (_owner.isAutoDownload)
-            {
-                patchDownloader.BuildDownloaders();
-                patchDownloader.StartDownload();
-            }
         }
     }
 }

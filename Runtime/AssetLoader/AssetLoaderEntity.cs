@@ -105,6 +105,52 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
 
         #region Load Assets
 
+        public void LoadAssetAsync<T>(string assetName, Action<T> callback, uint priority = 0) where T : Object
+        {
+            if (_defaultPackage == null)
+            {
+                _logger.Error("[AssetLoader] Default package is not set, cannot load asset");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(assetName))
+            {
+                _logger.Error("[AssetLoader] Asset name is null or empty, cannot load asset");
+                return;
+            }
+
+            if (!_packageAssetGroupDic.TryGetValue(_defaultPackage.PackageName, out var packageAssetGroup))
+            {
+                packageAssetGroup = new PackageAssetGroup(_defaultPackage, _logger);
+                _packageAssetGroupDic[_defaultPackage.PackageName] = packageAssetGroup;
+            }
+
+            packageAssetGroup.LoadAssetAsync<T>(assetName, callback, priority);
+        }
+
+        public void LoadAssetAsync<T>(string packageName, string assetName, Action<T> callback, uint priority = 0) where T : Object
+        {
+            if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(assetName))
+            {
+                _logger.Error("[AssetLoader] Package name or asset name is null or empty");
+                return;
+            }
+            
+            if (!_packageAssetGroupDic.TryGetValue(packageName, out var packageAssetGroup))
+            {
+                var package = GetPackage(packageName);
+                if (package == null)
+                {
+                    _logger.Error($"[AssetLoader] Package: {packageName} not found, cannot load asset: {assetName}");
+                    return;
+                }
+                packageAssetGroup = new PackageAssetGroup(package, _logger);
+                _packageAssetGroupDic[packageName] = packageAssetGroup;
+            }
+          
+            packageAssetGroup.LoadAssetAsync<T>(assetName, callback, priority);
+        }
+
 #if DORIES_UNITASK_SUPPORT
         public async UniTask<T> LoadAssetAsync<T>(string assetName, uint priority = 0) where T : Object
 #else

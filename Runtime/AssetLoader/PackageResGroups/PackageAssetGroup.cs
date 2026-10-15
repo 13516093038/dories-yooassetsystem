@@ -29,6 +29,24 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
 
         #region Asset 加载
 
+        public async void LoadAssetAsync<T>(string assetName, Action<T> callback, uint priority = 0) where T : Object
+        {
+            if (string.IsNullOrEmpty(assetName))
+            {
+                _logger.Error("[AssetLoader] Asset name is null or empty");
+                return;
+            }
+
+            try
+            {
+                callback?.Invoke(await LoadAssetAsync<T>(assetName, priority));
+            }
+            catch (Exception)
+            {
+                // 失败日志在返回值重载里已经写过。这里只接住异常，避免 async void 变成未处理异常。
+            }
+        }
+
 #if DORIES_UNITASK_SUPPORT
         public async UniTask<T> LoadAssetAsync<T>(string assetName, uint priority = 0) where T : Object
 #else
@@ -37,90 +55,97 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
         {
             if (string.IsNullOrEmpty(assetName))
             {
+                _logger.Error("[AssetLoader] Asset name is null or empty");
                 return null;
             }
 
-            //检查是否有正在执行的加载任务
             if (_loadingTasker.TryGetLoadingTask(assetName, out var existingTask))
             {
                 _logger.Debug($"[AssetLoader] Asset: {assetName} is loading, waiting for existing task...");
-#if DORIES_UNITASK_SUPPORT
-                var source = (UniTaskCompletionSource<Object>)existingTask;
-#else
-                var source = (TaskCompletionSource<Object>)existingTask;
-#endif
-
-                var asset = await source.Task;
-
+                var asset = await WaitLoading((LoadGate)existingTask);
                 if (asset != null)
-                {
-                    _refCountDic[assetName]++;
-#if UNITY_EDITOR
-                    SyncResLoadRefCount(assetName);
-#endif
-                }
-
+                    Retain(assetName);
                 return asset as T;
             }
 
-            //从缓存拿
-            if (_cacheDic.TryGetValue(assetName, out HandleBase handle))
+            if (_cacheDic.ContainsKey(assetName))
+                return UseCached<T>(assetName);
+
+            var gate = new LoadGate();
+            _loadingTasker.TryAddLoadingTask(assetName, gate);
+            DateTime loadTime = DateTime.Now;
+            try
             {
-                _refCountDic[assetName]++;
-#if UNITY_EDITOR
-                SyncResLoadRefCount(assetName);
-#endif
-                return ((AssetHandle)handle).AssetObject as T;
+                var handle = _package.LoadAssetAsync<T>(assetName, priority);
+                await handle;
+                var asset = FinishLoad<T>(assetName, handle, loadTime);
+                gate.SetResult(asset);
+                return asset;
             }
-            else
+            catch (Exception e)
             {
-                //创建加载任务
-#if DORIES_UNITASK_SUPPORT
-                var completionSource = new UniTaskCompletionSource<Object>();
-#else
-                var completionSource = new TaskCompletionSource<Object>();
-#endif
-                _loadingTasker.TryAddLoadingTask(assetName, completionSource);
-
-#if UNITY_EDITOR
-                DateTime loadTime = DateTime.Now;
-#endif
-                try
-                {
-                    handle = _package.LoadAssetAsync<T>(assetName, priority);
-                    await handle;
-                    var asset = ((AssetHandle)handle).AssetObject as T;
-                    _cacheDic.Add(assetName, handle);
-                    _refCountDic.Add(assetName, 1);
-                    completionSource.TrySetResult(asset);
-                    _logger.Debug(
-                        $"[AssetLoader] Asset: {assetName} loaded successfully, ref count: {_refCountDic[assetName]}");
-
-#if UNITY_EDITOR
-                    float costTime = (float)DateTime.Now.Subtract(loadTime).TotalMilliseconds;    
-                    var resLoadInfo = new ResLoadInfo();
-                    resLoadInfo.LoadTime = costTime;
-                    resLoadInfo.RefCount = _refCountDic[assetName];
-                    _packageResLoadViewInfo.ResLoadInfos.Add(assetName, resLoadInfo);
-#endif
-
-
-                    return asset;
-                }
-                catch (Exception e)
-                {
-                    _logger.Error($"[AssetLoader] Asset: {assetName} loaded failed, error: {e}");
-                    completionSource.TrySetException(e);
-                    throw;
-                }
-                finally
-                {
-                    _loadingTasker.TryRemoveLoadingTask(assetName);
-                    ProcessPendingUnloads(assetName);
-                }
+                _logger.Error($"[AssetLoader] Asset: {assetName} loaded failed, error: {e}");
+                gate.SetException(e);
+                throw;
+            }
+            finally
+            {
+                _loadingTasker.TryRemoveLoadingTask(assetName);
+                ProcessPendingUnloads(assetName);
             }
         }
+
+#if DORIES_UNITASK_SUPPORT
+        private async UniTask<Object> WaitLoading(LoadGate gate)
+#else
+        private async Task<Object> WaitLoading(LoadGate gate)
+#endif
+        {
+#if DORIES_UNITASK_SUPPORT
+            var mine = new UniTaskCompletionSource<Object>();
+#else
+            var mine = new TaskCompletionSource<Object>();
+#endif
+            gate.AddWaiter((asset, exception) =>
+            {
+                if (exception != null)
+                    mine.TrySetException(exception);
+                else
+                    mine.TrySetResult(asset as Object);
+            });
+            return await mine.Task;
+        }
+
+        private void Retain(string assetName)
+        {
+            _refCountDic[assetName]++;
+#if UNITY_EDITOR
+            SyncResLoadRefCount(assetName);
+#endif
+        }
+
+        private T UseCached<T>(string assetName) where T : Object
+        {
+            Retain(assetName);
+            return ((AssetHandle)_cacheDic[assetName]).AssetObject as T;
+        }
 #endregion
+
+        private T FinishLoad<T>(string assetName, HandleBase handle, DateTime loadTime) where T : Object
+        {
+            var asset = ((AssetHandle)handle).AssetObject as T;
+            _cacheDic.Add(assetName, handle);
+            _refCountDic.Add(assetName, 1);
+            _logger.Debug($"[AssetLoader] Asset: {assetName} loaded successfully, ref count: {_refCountDic[assetName]}");
+
+#if UNITY_EDITOR
+            var resLoadInfo = new ResLoadInfo();
+            resLoadInfo.LoadTime = (float)DateTime.Now.Subtract(loadTime).TotalMilliseconds;
+            resLoadInfo.RefCount = _refCountDic[assetName];
+            _packageResLoadViewInfo.ResLoadInfos.Add(assetName, resLoadInfo);
+#endif
+            return asset;
+        }
 
         public void UnloadAsset(string assetName, bool forceUnload)
         {

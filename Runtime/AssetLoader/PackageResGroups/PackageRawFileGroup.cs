@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 #else
 using System.Threading.Tasks;
 #endif
-using Dories.YooassetSystem.Runtime.AssetLoader;
 using Dories.YooAssetSystem.Runtime.LogSystem;
 using YooAsset;
 
@@ -44,12 +43,21 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             if (_loadingTasker.TryGetLoadingTask(location, out var existingTask))
             {
                 _logger.Debug($"[AssetLoader] RawFile: {location} is loading, waiting for existing task...");
+                var gate = (LoadGate)existingTask;
 #if DORIES_UNITASK_SUPPORT
-                var source = (UniTaskCompletionSource<RawFileObject>)existingTask;
-#else
-                var source = (TaskCompletionSource<RawFileObject>)existingTask;
+                    var mine = new UniTaskCompletionSource<RawFileObject>();
+    #else
+                    var mine = new TaskCompletionSource<RawFileObject>();
 #endif
-                var rawFile = await source.Task;
+                gate.AddWaiter((rawFile, exception) =>
+                {
+                    if (exception != null)
+                        mine.TrySetException(exception);
+                    else
+                        mine.TrySetResult(rawFile as RawFileObject);
+                });
+                var rawFile = await mine.Task;
+
                 if (rawFile != null)
                 {
                     _refCountDic[location]++;
@@ -69,12 +77,8 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                 return handle.GetAssetObject<RawFileObject>();
             }
 
-#if DORIES_UNITASK_SUPPORT
-            var completionSource = new UniTaskCompletionSource<RawFileObject>();
-#else
-            var completionSource = new TaskCompletionSource<RawFileObject>();
-#endif
-            _loadingTasker.TryAddLoadingTask(location, completionSource);
+            var loadGate = new LoadGate();
+            _loadingTasker.TryAddLoadingTask(location, loadGate);
 
 #if UNITY_EDITOR
             var loadTime = DateTime.Now;
@@ -95,7 +99,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                 var rawFileObject = handle.GetAssetObject<RawFileObject>();
                 _cacheDic[location] = handle;
                 _refCountDic[location] = 1;
-                completionSource.TrySetResult(rawFileObject);
+                loadGate.SetResult(rawFileObject);
                 _logger.Debug(
                     $"[AssetLoader] RawFile: {location} loaded successfully, ref count: {_refCountDic[location]}");
 
@@ -113,7 +117,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             catch (Exception e)
             {
                 _logger.Error($"[AssetLoader] RawFile: {location} loaded failed, error: {e}");
-                completionSource.TrySetException(e);
+                loadGate.SetException(e);
                 throw;
             }
             finally
