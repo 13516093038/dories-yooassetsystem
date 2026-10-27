@@ -5,7 +5,7 @@ using Cysharp.Threading.Tasks;
 #else
 using System.Threading.Tasks;
 #endif
-using Dories.YooAssetSystem.Runtime.LogSystem;
+using Dories.Logging;
 using YooAsset;
 
 namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
@@ -20,11 +20,11 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
         private Dictionary<string, int> _refCountDic;
         private readonly Dictionary<string, List<bool>> _pendingUnloads;
 
-        public PackageRawFileGroup(ResourcePackage package, ILog logger) : base(package, logger)
+        public PackageRawFileGroup(ResourcePackage package) : base(package)
         {
             _cacheDic = new Dictionary<string, AssetHandle>();
             _refCountDic = new Dictionary<string, int>();
-            _loadingTasker = new LoadingTasker(logger);
+            _loadingTasker = new LoadingTasker();
             _pendingUnloads = new Dictionary<string, List<bool>>();
         }
 
@@ -36,13 +36,13 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
         {
             if (string.IsNullOrEmpty(location))
             {
-                _logger.Error("[AssetLoader] RawFile location is null or empty");
+                Log.Error("AssetLoader", "RawFile location is null or empty");
                 return null;
             }
 
             if (_loadingTasker.TryGetLoadingTask(location, out var existingTask))
             {
-                _logger.Debug($"[AssetLoader] RawFile: {location} is loading, waiting for existing task...");
+                Log.Debug("AssetLoader", $"RawFile: {location} is loading, waiting for existing task...");
                 var gate = (LoadGate)existingTask;
 #if DORIES_UNITASK_SUPPORT
                     var mine = new UniTaskCompletionSource<RawFileObject>();
@@ -100,8 +100,8 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                 _cacheDic[location] = handle;
                 _refCountDic[location] = 1;
                 loadGate.SetResult(rawFileObject);
-                _logger.Debug(
-                    $"[AssetLoader] RawFile: {location} loaded successfully, ref count: {_refCountDic[location]}");
+                Log.Debug("AssetLoader",
+                    $"RawFile: {location} loaded successfully, ref count: {_refCountDic[location]}");
 
 #if UNITY_EDITOR
                 var costTime = (float)DateTime.Now.Subtract(loadTime).TotalMilliseconds;
@@ -116,7 +116,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             }
             catch (Exception e)
             {
-                _logger.Error($"[AssetLoader] RawFile: {location} loaded failed, error: {e}");
+                Log.Error("AssetLoader", $"RawFile: {location} loaded failed, error: {e}");
                 loadGate.SetException(e);
                 throw;
             }
@@ -173,7 +173,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
         {
             if (!_cacheDic.TryGetValue(location, out var handle))
             {
-                _logger.Warn($"[AssetLoader] RawFile: {location} not found in cache, cannot unload");
+                Log.Warn("AssetLoader", $"RawFile: {location} not found in cache, cannot unload");
                 return;
             }
 
@@ -191,15 +191,15 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                     handle.Release();
 
                 _package.TryUnloadUnusedAsset(location);
-                _logger.Debug($"[AssetLoader] RawFile: {location} unloaded");
+                Log.Debug("AssetLoader", $"RawFile: {location} unloaded");
             }
             else
             {
 #if UNITY_EDITOR
                 SyncRawFileRefCount(location);
 #endif
-                _logger.Debug(
-                    $"[AssetLoader] RawFile: {location} ref count decreased to {_refCountDic[location]}");
+                Log.Debug("AssetLoader",
+                    $"RawFile: {location} ref count decreased to {_refCountDic[location]}");
             }
         }
 
@@ -212,7 +212,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             if (pendingList.Count == 0)
                 return;
 
-            _logger.Debug($"[AssetLoader] RawFile: {location}, pending unload count: {pendingList.Count}");
+            Log.Debug("AssetLoader", $"RawFile: {location}, pending unload count: {pendingList.Count}");
             foreach (var forceUnload in pendingList)
                 UnloadRawFileCore(location, forceUnload);
         }

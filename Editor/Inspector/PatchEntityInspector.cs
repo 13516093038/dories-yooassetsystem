@@ -1,7 +1,6 @@
 using Dories.yooassetsystem.Editor.Utilities;
 using Dories.YooAssetSystem.Runtime.Patch.Operations;
 using Dories.YooAssetSystem.Runtime.Patch;
-using Dories.YooAssetSystem.Runtime.LogSystem;
 using UnityEditor;
 using UnityEngine;
 using YooAsset;
@@ -16,7 +15,6 @@ namespace Dories.YooAssetSystem.Editor.Inspector
      public class PatchEntityInspector : UnityEditor.Editor
      {
          // 缓存 SerializedProperty，避免每帧 FindProperty
-         private SerializedProperty _logNameProp;
          private SerializedProperty _isReleaseModeProp;
          private SerializedProperty _playModeProp;
          private SerializedProperty _packagesInfoListProp;
@@ -33,7 +31,6 @@ namespace Dories.YooAssetSystem.Editor.Inspector
 
          private void OnEnable()
          {
-             _logNameProp = serializedObject.FindProperty("iLog");
              _isReleaseModeProp = serializedObject.FindProperty("isReleaseMode");
              _playModeProp = serializedObject.FindProperty("playMode");
              _packagesInfoListProp = serializedObject.FindProperty("packagesInfoList");
@@ -60,15 +57,6 @@ namespace Dories.YooAssetSystem.Editor.Inspector
                  EditorGUILayout.PropertyField(_isAutoDownloadProp,
                      new GUIContent("Auto Download", "检测到有资源需要更新时，是否自动开始下载；关闭则需由 NeedUpdateListener 手动确认。"));
              }
-
-             TypeSelectorUtility.DrawTypePopup(
-                 _logNameProp,
-                 typeof(ILog),
-                 "ILog",
-                 false,
-                 true,
-                 "You must select a Logger"
-             );
          }
 
          private void DrawPackagesList()

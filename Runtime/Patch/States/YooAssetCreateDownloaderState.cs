@@ -18,7 +18,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
 
         private void CreateDownloaderTask()
         {
-            var patchDownloader = new PatchDownloader(_owner.packagesInfoList, _logger);
+            var patchDownloader = new PatchDownloader(_owner.packagesInfoList);
             _owner._patchDowner = patchDownloader;
             _owner._needUpdateListener?.Invoke(patchDownloader);
             

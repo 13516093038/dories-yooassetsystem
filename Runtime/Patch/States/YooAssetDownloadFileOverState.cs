@@ -1,4 +1,5 @@
 using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
+using Dories.Logging;
 using UnityEngine;
 
 namespace Dories.YooAssetSystem.Runtime.Patch.States
@@ -11,7 +12,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
             {
                 PlayerPrefs.SetString($"{packageInfo.PackageName}_GAME_VERSION",
                           packageInfo.PackageVersion);
-                _logger.Info(
+                Log.Info("Patch",
                     $"Update local package version success. [{packageInfo.PackageName}_GAME_VERSION]: <{packageInfo.PackageVersion}>");
             }
             ChangeState<YooAssetClearCacheBundleState>();

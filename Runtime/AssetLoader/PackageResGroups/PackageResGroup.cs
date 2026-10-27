@@ -1,20 +1,17 @@
-﻿using Dories.YooAssetSystem.Runtime.LogSystem;
-using YooAsset;
+﻿using YooAsset;
 
 namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
 {
     public class PackageResGroup
     {
-        protected ILog _logger;
         protected ResourcePackage _package;
 #if UNITY_EDITOR
         protected internal PackageResLoadViewInfo _packageResLoadViewInfo;
 #endif
         
-        public PackageResGroup(ResourcePackage package, ILog logger)
+        public PackageResGroup(ResourcePackage package)
         {
             _package = package;
-            _logger = logger;
 
 #if UNITY_EDITOR
             _packageResLoadViewInfo = new PackageResLoadViewInfo(package.PackageName);

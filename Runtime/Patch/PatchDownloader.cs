@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Dories.YooAssetSystem.Runtime.LogSystem;
+using Dories.Logging;
 #if DORIES_UNITASK_SUPPORT
 using Cysharp.Threading.Tasks;
 #else
@@ -56,16 +56,14 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         private DownloaderOperation _curDownloader;
         private List<PatchEntity.PackageInfo> _packageInfos;
         private bool _isNeedBuildDownloaders = true;
-        private ILog _logger;
 
         public DownloadStatus Status { get; internal set; }
 
         public string CurrentDownloadingPackage { get; internal set; }
 
-        internal PatchDownloader(List<PatchEntity.PackageInfo> packageInfos, ILog logger)
+        internal PatchDownloader(List<PatchEntity.PackageInfo> packageInfos)
         {
             _packageInfos = packageInfos;
-            _logger  = logger;
             Status = DownloadStatus.Undo;
             _onDownloadProgressChanged = new Dictionary<string, Action<DownloadProgressChangedEventArgs>>();
             _onDownloadCompleted = new Dictionary<string, Action<DownloadCompletedEventArgs>>();
@@ -199,7 +197,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             if (_isNeedBuildDownloaders)
             {
-                _logger.Error("Downloaders are not built, please call BuildDownloaders() first");
+                Log.Error("Patch", "Downloaders are not built, please call BuildDownloaders() first");
                 return 0;
             }
 
@@ -224,7 +222,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             if (_isNeedBuildDownloaders)
             {
-                _logger.Error("Downloaders are not built, please call BuildDownloaders() first");
+                Log.Error("Patch", "Downloaders are not built, please call BuildDownloaders() first");
                 return 0;
             }
 
@@ -245,7 +243,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             if (_isNeedBuildDownloaders)
             {
-                _logger.Error("Downloaders are not built, please call BuildDownloaders() first");
+                Log.Error("Patch", "Downloaders are not built, please call BuildDownloaders() first");
                 return 0;
             }
 
@@ -270,7 +268,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             if (_isNeedBuildDownloaders)
             {
-                _logger.Error("Downloaders are not built, please call BuildDownloaders() first");
+                Log.Error("Patch", "Downloaders are not built, please call BuildDownloaders() first");
                 return 0;
             }
         
@@ -292,7 +290,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             if (!_onDownloadProgressChanged.TryAdd(packageName, onDownloadProgressChanged))
             {
-                _logger.Warn(
+                Log.Warn("Patch",
                     $"DownloadProgressChanged event already exists for package: {packageName}, overwrite it");
                 _onDownloadProgressChanged[packageName] = onDownloadProgressChanged;
             }
@@ -308,7 +306,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             if (!_onDownloadCompleted.TryAdd(packageName, onDownloadCompleted))
             {
-                _logger.Warn($"DownloadCompleted event already exists for package: {packageName}, overwrite it");
+                Log.Warn("Patch", $"DownloadCompleted event already exists for package: {packageName}, overwrite it");
                 _onDownloadCompleted[packageName] = onDownloadCompleted;
             }
         }
@@ -322,7 +320,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             if (!_onDownloadError.TryAdd(packageName, onDownloadError))
             {
-                _logger.Warn($"DownloadError event already exists for package: {packageName}, overwrite it");
+                Log.Warn("Patch", $"DownloadError event already exists for package: {packageName}, overwrite it");
                 _onDownloadError[packageName] = onDownloadError;
             }
         }
@@ -382,7 +380,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             if (_isNeedBuildDownloaders)
             {
-                _logger.Error("Downloaders are not built, please call BuildDownloaders() first");
+                Log.Error("Patch", "Downloaders are not built, please call BuildDownloaders() first");
                 return;
             }
 
@@ -395,18 +393,18 @@ namespace Dories.YooAssetSystem.Runtime.Patch
 
             if(GetAllNeedDownloadCount() == 0)
             {
-                _logger.Info("There is no package to download");
+                Log.Info("Patch", "There is no package to download");
                 _allPackageDownloadCompleted?.Invoke();
                 return;
             }
 
             if (Status != DownloadStatus.Undo && Status != DownloadStatus.Cancel && Status != DownloadStatus.Fail)
             {
-                _logger.Error("Download status is not undo or cancel");
+                Log.Error("Patch", "Download status is not undo or cancel");
                 return;
             }
 
-            _logger.Info($"Start download, total download size: {GetAllNeedDownloadSize()}, total download count: {GetAllNeedDownloadCount()}");
+            Log.Info("Patch", $"Start download, total download size: {GetAllNeedDownloadSize()}, total download count: {GetAllNeedDownloadCount()}");
             
             Status = DownloadStatus.Downloading;
             _ = DownloadTask();
@@ -452,14 +450,14 @@ namespace Dories.YooAssetSystem.Runtime.Patch
 
                     //开始下载
                     downloader.StartDownload();
-                    _logger.Info(
+                    Log.Info("Patch",
                         $"Start download: {packageName}, download size: {(downloader.TotalDownloadBytes / 1024 / 1024):F2} MB, download count: {downloader.TotalDownloadCount}");
                     _curDownloader = downloader;
                     await _curDownloader;
                     if (_curDownloader.Status != EOperationStatus.Succeeded)
                     {
                         Status = DownloadStatus.Fail;
-                        _logger.Error($"Download {packageName} error: {_curDownloader.Error}");
+                        Log.Error("Patch", $"Download {packageName} error: {_curDownloader.Error}");
                         _onDownloadFailed?.Invoke(_curDownloader.Error);
 
                         _resourceDownloaderOperations.Clear();
@@ -476,7 +474,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             if (_curDownloader == null)
             {
-                Debug.LogError("There is no downloading package");
+                Log.Error("Patch", "There is no downloading package");
                 return;
             }
 
@@ -488,7 +486,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             if (Status != DownloadStatus.Pausing)
             {
-                _logger.Error("Download status is not pausing");
+                Log.Error("Patch", "Download status is not pausing");
                 return;
             }
 
@@ -500,7 +498,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             if (_curDownloader == null)
             {
-                _logger.Error("There is no downloading package");
+                Log.Error("Patch", "There is no downloading package");
                 return;
             }
 

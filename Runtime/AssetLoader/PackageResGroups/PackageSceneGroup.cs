@@ -5,7 +5,7 @@ using Cysharp.Threading.Tasks;
 #else
 using System.Threading.Tasks;
 #endif
-using Dories.YooAssetSystem.Runtime.LogSystem;
+using Dories.Logging;
 using UnityEngine.SceneManagement;
 using YooAsset;
 // Unity 6 起 SceneManagement 也有 SceneHandle，与 YooAsset 重名，这里固定指向 YooAsset。
@@ -18,10 +18,10 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
         private LoadingTasker _loadingTasker;
         private Dictionary<string, SceneHandle> _cacheDic;
 
-        public PackageSceneGroup(ResourcePackage package, ILog logger) : base(package, logger)
+        public PackageSceneGroup(ResourcePackage package) : base(package)
         {
             _cacheDic = new Dictionary<string, SceneHandle>();
-            _loadingTasker = new LoadingTasker(logger);
+            _loadingTasker = new LoadingTasker();
         }
 
         /// <summary>
@@ -42,13 +42,13 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
         {
             if (string.IsNullOrEmpty(sceneLocation))
             {
-                _logger.Error("[AssetLoader] Scene location is null or empty");
+                Log.Error("AssetLoader", "Scene location is null or empty");
                 return null;
             }
 
             if (_loadingTasker.TryGetLoadingTask(sceneLocation, out var existingTask))
             {
-                _logger.Debug($"[AssetLoader] Scene: {sceneLocation} is loading, waiting for existing task...");
+                Log.Debug("AssetLoader", $"Scene: {sceneLocation} is loading, waiting for existing task...");
                 var gate = (LoadGate)existingTask;
 #if DORIES_UNITASK_SUPPORT
                 var mine = new UniTaskCompletionSource<SceneLoadResult>();
@@ -69,7 +69,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                 && _cacheDic.TryGetValue(sceneLocation, out var cachedHandle)
                 && cachedHandle.IsValid)
             {
-                _logger.Debug($"[AssetLoader] Scene: {sceneLocation} loaded from cache");
+                Log.Debug("AssetLoader", $"Scene: {sceneLocation} loaded from cache");
                 return new SceneLoadResult(sceneLocation, cachedHandle);
             }
 
@@ -119,10 +119,10 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
                 _cacheDic[sceneLocation] = handle;
                 var result = new SceneLoadResult(sceneLocation, handle);
                 loadGate.SetResult(result);
-                _logger.Debug(
+                Log.Debug("AssetLoader",
                     allowSceneActivation
-                        ? $"[AssetLoader] Scene: {sceneLocation} loaded and activated"
-                        : $"[AssetLoader] Scene: {sceneLocation} ready for activation, progress: {handle.Progress}");
+                        ? $"Scene: {sceneLocation} loaded and activated"
+                        : $"Scene: {sceneLocation} ready for activation, progress: {handle.Progress}");
 
 #if UNITY_EDITOR
                 var costTime = (float)DateTime.Now.Subtract(loadTime).TotalMilliseconds;
@@ -137,7 +137,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             }
             catch (Exception e)
             {
-                _logger.Error($"[AssetLoader] Scene: {sceneLocation} loaded failed, error: {e}");
+                Log.Error("AssetLoader", $"Scene: {sceneLocation} loaded failed, error: {e}");
                 loadGate.SetException(e);
                 throw;
             }
@@ -186,13 +186,13 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
 
             if (_loadingTasker.HasLoadingTask(sceneLocation))
             {
-                _logger.Warn($"[AssetLoader] Scene: {sceneLocation} is loading, cannot unload now");
+                Log.Warn("AssetLoader", $"Scene: {sceneLocation} is loading, cannot unload now");
                 return;
             }
 
             if (!_cacheDic.TryGetValue(sceneLocation, out var handle) || !handle.IsValid)
             {
-                _logger.Warn($"[AssetLoader] Scene: {sceneLocation} not found in cache, cannot unload");
+                Log.Warn("AssetLoader", $"Scene: {sceneLocation} not found in cache, cannot unload");
                 return;
             }
 
@@ -201,7 +201,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
 
             if (unloadOp.Status != EOperationStatus.Succeeded)
             {
-                _logger.Error($"[AssetLoader] Scene: {sceneLocation} unload failed, error: {unloadOp.Error}");
+                Log.Error("AssetLoader", $"Scene: {sceneLocation} unload failed, error: {unloadOp.Error}");
                 return;
             }
 
@@ -209,7 +209,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
 #if UNITY_EDITOR
             _packageResLoadViewInfo.SceneLoadInfos.Remove(sceneLocation);
 #endif
-            _logger.Debug($"[AssetLoader] Scene: {sceneLocation} unloaded successfully");
+            Log.Debug("AssetLoader", $"Scene: {sceneLocation} unloaded successfully");
         }
     }
 }

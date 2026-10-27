@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Dories.YooAssetSystem.Runtime.LogSystem;
+using Dories.Logging;
 using Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem;
 using Dories.YooAssetSystem.Runtime.Patch.Operations;
 using Dories.YooAssetSystem.Runtime.Patch.States;
@@ -57,7 +57,6 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             public string[] Tags => tags;
         }
 
-        [SerializeField] internal string iLog;
         [SerializeField] internal bool isAutoDownload = false;
         [SerializeField] internal bool isReleaseMode;
         [SerializeField] internal PlayMode playMode;
@@ -78,14 +77,11 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         internal Action<string> _patchFailed;
         internal Action<string> _patchError;
 
-        private ILog _logger;
         private FsmSystem<PatchEntity> _fsmSystem;
         private bool _isStarted = false;
 
         private void Awake()
         {
-            _logger = CreateLog(iLog);
-            
             foreach (var packageInfo in packagesInfoList)
             {
                 packageInfo.RemoteService = CreateRemoteService(packageInfo.RemoteServiceTypeName);
@@ -112,25 +108,6 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             return null;
         }
 
-        private ILog CreateLog(string log)
-        {
-            if (!string.IsNullOrEmpty(log))
-            {
-                try
-                {
-                    var type = ResolveType(log);
-                    if (type != null)
-                        return Activator.CreateInstance(type) as ILog;
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Create logger failed: {e}, Type name: {log}");
-                }
-            }
-
-            return new BuildInLogEntity();
-        }
-
         private IRemoteService CreateRemoteService(string remoteServiceTypeName)
         {
             if (!string.IsNullOrEmpty(remoteServiceTypeName))
@@ -141,11 +118,11 @@ namespace Dories.YooAssetSystem.Runtime.Patch
                     if (type != null)
                         return Activator.CreateInstance(type) as IRemoteService;
 
-                    _logger.Error($"CreateRemoteService failed: type not found, Type name: {remoteServiceTypeName}");
+                    Log.Error("Patch", $"CreateRemoteService failed: type not found, Type name: {remoteServiceTypeName}");
                 }
                 catch (Exception e)
                 {
-                    _logger.Error($"CreateRemoteService failed: {e}, Type name: {remoteServiceTypeName}");
+                    Log.Error("Patch", $"CreateRemoteService failed: {e}, Type name: {remoteServiceTypeName}");
                 }
             }
 
@@ -162,11 +139,11 @@ namespace Dories.YooAssetSystem.Runtime.Patch
                     if (type != null)
                         return Activator.CreateInstance(type) as IBundleDecryptor;
 
-                    _logger.Error($"CreateBundleDecryptor failed: type not found, Type name: {bundleDecryptorTypeName}");
+                    Log.Error("Patch", $"CreateBundleDecryptor failed: type not found, Type name: {bundleDecryptorTypeName}");
                 }
                 catch (Exception e)
                 {
-                    _logger.Error($"CreateBundleDecryptor failed: {e},  Type name: {bundleDecryptorTypeName}");
+                    Log.Error("Patch", $"CreateBundleDecryptor failed: {e},  Type name: {bundleDecryptorTypeName}");
                 }
             }
 
@@ -201,13 +178,13 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             if (_isStarted)
             {
-                _logger.Error("Patch already started");
+                Log.Error("Patch", "Patch already started");
                 return;
             }
 
             _isStarted = true;
 
-            _fsmSystem = new FsmSystem<PatchEntity>(this, _logger);
+            _fsmSystem = new FsmSystem<PatchEntity>(this);
             
             _fsmSystem.AddNode(new YooAssetInitState());
             _fsmSystem.AddNode(new YooAssetRequestPackageVersionState());

@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Dories.Logging;
 using UnityEngine;
 using YooAsset;
 
@@ -13,7 +14,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
 
             if (operation.Status != EOperationStatus.Succeeded)
             {
-                Debug.LogError($"Failed to request package version: {operation.Error}");
+                Log.Error("Patch", $"Failed to request package version: {operation.Error}");
                 return string.Empty;
             }
             else

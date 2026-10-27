@@ -6,7 +6,7 @@ using Cysharp.Threading.Tasks;
 #else
 using System.Threading.Tasks;
 #endif
-using Dories.YooAssetSystem.Runtime.LogSystem;
+using Dories.Logging;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using YooAsset;
@@ -16,64 +16,18 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
 {
     public class AssetLoaderEntity : MonoBehaviour
     {
-        [SerializeField] private string ILog;
-
         private ResourcePackage _defaultPackage;
-        private ILog _logger;
         private Dictionary<string, PackageAssetGroup> _packageAssetGroupDic = new();
         private Dictionary<string, PackageSceneGroup> _packageSceneGroupDic = new();
         private Dictionary<string, PackageRawFileGroup> _packageRawFileGroupDic = new();
 
         private Dictionary<string, ResourcePackage> _packageDic = new();
 
-        private void Awake()
-        {
-            _logger = CreateLog(ILog);
-        }
-
-        private ILog CreateLog(string log)
-        {
-            if (!string.IsNullOrEmpty(log))
-            {
-                try
-                {
-                    var type = ResolveType(log);
-                    if (type != null)
-                        return Activator.CreateInstance(type) as ILog;
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Create logger failed: {e}, Type name: {log}");
-                }
-            }
-
-            return new BuildInLogEntity();
-        }
-
-        private static Type ResolveType(string typeName)
-        {
-            if (string.IsNullOrEmpty(typeName))
-                return null;
-
-            var type = Type.GetType(typeName);
-            if (type != null)
-                return type;
-
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                type = assembly.GetType(typeName);
-                if (type != null)
-                    return type;
-            }
-
-            return null;
-        }
-
         private ResourcePackage GetPackage(string packageName)
         {
             if (string.IsNullOrEmpty(packageName))
             {
-                _logger.Error("[AssetLoader] Package name is null or empty");
+                Log.Error("AssetLoader", "Package name is null or empty");
                 return null;
             }
 
@@ -89,7 +43,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
             }
             else
             {
-                _logger.Error($"[AssetLoader] Package: {packageName} not found, cannot get package");
+                Log.Error("AssetLoader", $"Package: {packageName} not found, cannot get package");
                 return null;
             }
         }
@@ -99,7 +53,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
             _defaultPackage = GetPackage(packageName);
             if (_defaultPackage == null)
             {
-                _logger.Error($"[AssetLoader] Package: {packageName} not found, cannot set as default package");
+                Log.Error("AssetLoader", $"Package: {packageName} not found, cannot set as default package");
             }
         }
 
@@ -109,19 +63,19 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (_defaultPackage == null)
             {
-                _logger.Error("[AssetLoader] Default package is not set, cannot load asset");
+                Log.Error("AssetLoader", "Default package is not set, cannot load asset");
                 return;
             }
 
             if (string.IsNullOrEmpty(assetName))
             {
-                _logger.Error("[AssetLoader] Asset name is null or empty, cannot load asset");
+                Log.Error("AssetLoader", "Asset name is null or empty, cannot load asset");
                 return;
             }
 
             if (!_packageAssetGroupDic.TryGetValue(_defaultPackage.PackageName, out var packageAssetGroup))
             {
-                packageAssetGroup = new PackageAssetGroup(_defaultPackage, _logger);
+                packageAssetGroup = new PackageAssetGroup(_defaultPackage);
                 _packageAssetGroupDic[_defaultPackage.PackageName] = packageAssetGroup;
             }
 
@@ -132,7 +86,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(assetName))
             {
-                _logger.Error("[AssetLoader] Package name or asset name is null or empty");
+                Log.Error("AssetLoader", "Package name or asset name is null or empty");
                 return;
             }
             
@@ -141,10 +95,10 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
                 var package = GetPackage(packageName);
                 if (package == null)
                 {
-                    _logger.Error($"[AssetLoader] Package: {packageName} not found, cannot load asset: {assetName}");
+                    Log.Error("AssetLoader", $"Package: {packageName} not found, cannot load asset: {assetName}");
                     return;
                 }
-                packageAssetGroup = new PackageAssetGroup(package, _logger);
+                packageAssetGroup = new PackageAssetGroup(package);
                 _packageAssetGroupDic[packageName] = packageAssetGroup;
             }
           
@@ -159,19 +113,19 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (_defaultPackage == null)
             {
-                _logger.Error("[AssetLoader] Default package is not set, cannot load asset");
+                Log.Error("AssetLoader", "Default package is not set, cannot load asset");
                 return null;
             }
 
             if (string.IsNullOrEmpty(assetName))
             {
-                _logger.Error("[AssetLoader] Asset name is null or empty, cannot load asset");
+                Log.Error("AssetLoader", "Asset name is null or empty, cannot load asset");
                 return null;
             }
 
             if (!_packageAssetGroupDic.TryGetValue(_defaultPackage.PackageName, out var packageAssetGroup))
             {
-                packageAssetGroup = new PackageAssetGroup(_defaultPackage, _logger);
+                packageAssetGroup = new PackageAssetGroup(_defaultPackage);
                 _packageAssetGroupDic[_defaultPackage.PackageName] = packageAssetGroup;
             }
             return await packageAssetGroup.LoadAssetAsync<T>(assetName, priority);
@@ -186,7 +140,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(assetName))
             {
-                _logger.Error($"[AssetLoader] Package name or asset name is null or empty");
+                Log.Error("AssetLoader", $"Package name or asset name is null or empty");
                 return null;
             }
 
@@ -195,12 +149,12 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
                 var package = GetPackage(packageName);
                 if (package == null)
                 {
-                    _logger.Error($"[AssetLoader] Package: {packageName} not found, cannot load asset: {assetName}");
+                    Log.Error("AssetLoader", $"Package: {packageName} not found, cannot load asset: {assetName}");
                     return null;
                 }
                 else
                 {
-                    packageAssetGroup = new PackageAssetGroup(package, _logger);
+                    packageAssetGroup = new PackageAssetGroup(package);
                     _packageAssetGroupDic[packageName] = packageAssetGroup;
                 }
             }
@@ -221,7 +175,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
             if (package == null)
                 return null;
 
-            group = new PackageSceneGroup(package, _logger);
+            group = new PackageSceneGroup(package);
             _packageSceneGroupDic[packageName] = group;
             return group;
         }
@@ -239,13 +193,13 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (_defaultPackage == null)
             {
-                _logger.Error("[AssetLoader] Default package is not set, cannot load scene");
+                Log.Error("AssetLoader", "Default package is not set, cannot load scene");
                 return null;
             }
 
             if (string.IsNullOrEmpty(sceneLocation))
             {
-                _logger.Error("[AssetLoader] Scene location is null or empty, cannot load scene");
+                Log.Error("AssetLoader", "Scene location is null or empty, cannot load scene");
                 return null;
             }
 
@@ -270,14 +224,14 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(sceneLocation))
             {
-                _logger.Error("[AssetLoader] Package name or scene location is null or empty");
+                Log.Error("AssetLoader", "Package name or scene location is null or empty");
                 return null;
             }
 
             var group = GetOrCreateSceneGroup(packageName);
             if (group == null)
             {
-                _logger.Error($"[AssetLoader] Package: {packageName} not found, cannot load scene: {sceneLocation}");
+                Log.Error("AssetLoader", $"Package: {packageName} not found, cannot load scene: {sceneLocation}");
                 return null;
             }
 
@@ -288,7 +242,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (_defaultPackage == null)
             {
-                _logger.Error("[AssetLoader] Default package is not set, cannot unload scene");
+                Log.Error("AssetLoader", "Default package is not set, cannot unload scene");
                 return;
             }
 
@@ -309,7 +263,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(sceneLocation))
             {
-                _logger.Error("[AssetLoader] Package name or scene location is null or empty");
+                Log.Error("AssetLoader", "Package name or scene location is null or empty");
                 return;
             }
 
@@ -358,7 +312,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
             if (package == null)
                 return null;
 
-            group = new PackageRawFileGroup(package, _logger);
+            group = new PackageRawFileGroup(package);
             _packageRawFileGroupDic[packageName] = group;
             return group;
         }
@@ -371,13 +325,13 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (_defaultPackage == null)
             {
-                _logger.Error("[AssetLoader] Default package is not set, cannot load raw file");
+                Log.Error("AssetLoader", "Default package is not set, cannot load raw file");
                 return null;
             }
 
             if (string.IsNullOrEmpty(location))
             {
-                _logger.Error("[AssetLoader] RawFile location is null or empty");
+                Log.Error("AssetLoader", "RawFile location is null or empty");
                 return null;
             }
 
@@ -396,14 +350,14 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(location))
             {
-                _logger.Error("[AssetLoader] Package name or raw file location is null or empty");
+                Log.Error("AssetLoader", "Package name or raw file location is null or empty");
                 return null;
             }
 
             var group = GetOrCreateRawFileGroup(packageName);
             if (group == null)
             {
-                _logger.Error($"[AssetLoader] Package: {packageName} not found, cannot load raw file: {location}");
+                Log.Error("AssetLoader", $"Package: {packageName} not found, cannot load raw file: {location}");
                 return null;
             }
 
@@ -418,7 +372,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (_defaultPackage == null)
             {
-                _logger.Error("[AssetLoader] Default package is not set, cannot load raw file");
+                Log.Error("AssetLoader", "Default package is not set, cannot load raw file");
                 return null;
             }
 
@@ -450,7 +404,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (_defaultPackage == null)
             {
-                _logger.Error("[AssetLoader] Default package is not set, cannot load raw file");
+                Log.Error("AssetLoader", "Default package is not set, cannot load raw file");
                 return null;
             }
 
@@ -478,7 +432,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (_defaultPackage == null)
             {
-                _logger.Error("[AssetLoader] Default package is not set, cannot unload raw file");
+                Log.Error("AssetLoader", "Default package is not set, cannot unload raw file");
                 return;
             }
 
@@ -493,7 +447,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(location))
             {
-                _logger.Error("[AssetLoader] Package name or raw file location is null or empty");
+                Log.Error("AssetLoader", "Package name or raw file location is null or empty");
                 return;
             }
 
@@ -509,7 +463,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (_defaultPackage == null)
             {
-                _logger.Error("[AssetLoader] Default package is not set, cannot load asset");
+                Log.Error("AssetLoader", "Default package is not set, cannot load asset");
                 return;
             }
 
@@ -524,7 +478,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
             }
             else
             {
-                _logger.Error($"[AssetLoader] Asset: {assetName} not found, cannot unload");
+                Log.Error("AssetLoader", $"Asset: {assetName} not found, cannot unload");
             }
         }
 
@@ -532,13 +486,13 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(assetName))
             {
-                _logger.Error($"[AssetLoader] Package name or asset name is null or empty");
+                Log.Error("AssetLoader", $"Package name or asset name is null or empty");
                 return;
             }
 
             if (!_packageAssetGroupDic.TryGetValue(packageName, out var packageAssetGroup))
             {
-                _logger.Error($"[AssetLoader] Asset: {assetName} not found, cannot unload");
+                Log.Error("AssetLoader", $"Asset: {assetName} not found, cannot unload");
                 return;
             }
 

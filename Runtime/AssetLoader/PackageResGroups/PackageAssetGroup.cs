@@ -5,7 +5,7 @@ using Cysharp.Threading.Tasks;
 #else
 using System.Threading.Tasks;
 #endif
-using Dories.YooAssetSystem.Runtime.LogSystem;
+using Dories.Logging;
 using YooAsset;
 using Object = UnityEngine.Object;
 
@@ -19,11 +19,11 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
 
         protected readonly Dictionary<string, List<bool>> _pendingUnloads;
 
-        public PackageAssetGroup(ResourcePackage package, ILog logger) : base(package, logger)
+        public PackageAssetGroup(ResourcePackage package) : base(package)
         {
             _cacheDic = new Dictionary<string, HandleBase>();
             _refCountDic = new Dictionary<string, int>();
-            _loadingTasker = new LoadingTasker(logger);
+            _loadingTasker = new LoadingTasker();
             _pendingUnloads = new Dictionary<string, List<bool>>();
         }
 
@@ -33,7 +33,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
         {
             if (string.IsNullOrEmpty(assetName))
             {
-                _logger.Error("[AssetLoader] Asset name is null or empty");
+                Log.Error("AssetLoader", "Asset name is null or empty");
                 return;
             }
 
@@ -55,13 +55,13 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
         {
             if (string.IsNullOrEmpty(assetName))
             {
-                _logger.Error("[AssetLoader] Asset name is null or empty");
+                Log.Error("AssetLoader", "Asset name is null or empty");
                 return null;
             }
 
             if (_loadingTasker.TryGetLoadingTask(assetName, out var existingTask))
             {
-                _logger.Debug($"[AssetLoader] Asset: {assetName} is loading, waiting for existing task...");
+                Log.Debug("AssetLoader", $"Asset: {assetName} is loading, waiting for existing task...");
                 var asset = await WaitLoading((LoadGate)existingTask);
                 if (asset != null)
                     Retain(assetName);
@@ -84,7 +84,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             }
             catch (Exception e)
             {
-                _logger.Error($"[AssetLoader] Asset: {assetName} loaded failed, error: {e}");
+                Log.Error("AssetLoader", $"Asset: {assetName} loaded failed, error: {e}");
                 gate.SetException(e);
                 throw;
             }
@@ -136,7 +136,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             var asset = ((AssetHandle)handle).AssetObject as T;
             _cacheDic.Add(assetName, handle);
             _refCountDic.Add(assetName, 1);
-            _logger.Debug($"[AssetLoader] Asset: {assetName} loaded successfully, ref count: {_refCountDic[assetName]}");
+            Log.Debug("AssetLoader", $"Asset: {assetName} loaded successfully, ref count: {_refCountDic[assetName]}");
 
 #if UNITY_EDITOR
             var resLoadInfo = new ResLoadInfo();
@@ -191,7 +191,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
         {
             if(!_cacheDic.TryGetValue(assetName, out HandleBase handle))
             {
-                _logger.Warn($"[AssetLoader] Asset: {assetName} not found in cache, cannot unload");
+                Log.Warn("AssetLoader", $"Asset: {assetName} not found in cache, cannot unload");
             }
             else
             {
@@ -223,7 +223,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             if (pendingList == null || pendingList.Count == 0)
                 return;
 
-            _logger.Debug($"[AssetLoader] Asset: {assetName}, pending count: {pendingList.Count}");
+            Log.Debug("AssetLoader", $"Asset: {assetName}, pending count: {pendingList.Count}");
 
             // 按順序執行所有待執行的卸載
             foreach (var forceUnload in pendingList)
@@ -240,7 +240,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
             var pendingList = _pendingUnloads[assetName];
             _pendingUnloads.Remove(assetName);
 
-            _logger.Debug($"[AssetLoader] Retrieved {pendingList.Count} pending unloads for: {assetName}");
+            Log.Debug("AssetLoader", $"Retrieved {pendingList.Count} pending unloads for: {assetName}");
             return pendingList;
         }
 

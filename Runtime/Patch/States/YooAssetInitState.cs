@@ -1,4 +1,5 @@
 using System;
+using Dories.YooAssetSystem.Runtime.LogSystem;
 #if DORIES_UNITASK_SUPPORT
 using Cysharp.Threading.Tasks;
 #else
@@ -25,7 +26,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
 #endif
         {
             // 创建资源包裹类
-            YooAssets.Initialize(_logger);
+            YooAssets.Initialize(new YooAssetLogger());
             foreach (var packageInfo in _owner.packagesInfoList)
             {
                 ResourcePackage package;

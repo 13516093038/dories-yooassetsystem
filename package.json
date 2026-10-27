@@ -29,5 +29,7 @@
             "path": "Sample~"
         }
     ],
-    "dependencies": {}
+    "dependencies": {
+        "com.dories.logging": "1.0.0"
+    }
 }

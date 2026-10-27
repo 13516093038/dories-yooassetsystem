@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Dories.YooAssetSystem.Runtime.LogSystem;
+using Dories.Logging;
 
 namespace Dories.YooassetSystem.Runtime.AssetLoader
 {
@@ -13,13 +13,11 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         /// 追踪进行中的加载任务 (Single-Flight for Async)
         /// </summary>
         private readonly Dictionary<string, object> _LoadingTasks;
-        private ILog _logger;
 
 
-        public LoadingTasker(ILog logger)
+        public LoadingTasker()
         {
             _LoadingTasks = new Dictionary<string, object>();
-            _logger = logger;
         }
 
         /// <summary>
@@ -58,7 +56,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
         {
             if (_LoadingTasks.TryAdd(assetName, task))
             {
-                _logger.Debug($"[AssetLoader] Adding loading flag: {assetName}.");
+                Log.Debug("AssetLoader", $"Adding loading flag: {assetName}.");
             }     
         }
 
@@ -71,7 +69,7 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
             if (_LoadingTasks.ContainsKey(assetName))
             {
                 _LoadingTasks.Remove(assetName);
-                _logger.Debug($"[AssetLoader] Removing loading flag: {assetName}.");
+                Log.Debug("AssetLoader", $"Removing loading flag: {assetName}.");
             }
         }
     }

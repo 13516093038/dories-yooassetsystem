@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Dories.yooassetsystem.Editor.Utilities;
 using Dories.YooassetSystem.Runtime.AssetLoader;
-using Dories.YooAssetSystem.Runtime.LogSystem;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,16 +9,9 @@ namespace Dories.YooAssetSystem.Editor.Inspector
     [CustomEditor(typeof(AssetLoaderEntity))]
     public class AssetLoaderEntityInspector : UnityEditor.Editor
     {
-        private SerializedProperty _logNameProp;
-
         private readonly List<PackageResLoadViewInfo> _cachedAssetsInfo = new();
         private Vector2 _scrollPosition;
         private bool _cacheFoldout = true;
-
-        private void OnEnable()
-        {
-            _logNameProp = serializedObject.FindProperty("ILog");
-        }
 
         public override bool RequiresConstantRepaint()
         {
@@ -28,20 +20,6 @@ namespace Dories.YooAssetSystem.Editor.Inspector
 
         public override void OnInspectorGUI()
         {
-            serializedObject.Update();
-
-            TypeSelectorUtility.DrawTypePopup(
-                _logNameProp,
-                typeof(ILog),
-                "ILog",
-                false,
-                true,
-                "You must select a Logger"
-            );
-
-            serializedObject.ApplyModifiedProperties();
-
-            EditorGUILayout.Space(8);
             DrawCacheMonitor();
         }
 

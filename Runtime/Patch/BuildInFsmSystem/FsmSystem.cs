@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Dories.YooAssetSystem.Runtime.LogSystem;
+using Dories.Logging;
 
 
 namespace Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem
@@ -8,14 +8,12 @@ namespace Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem
      internal sealed class FsmSystem<T>
     {
         internal T _fsmOwner;
-        internal ILog _logger;
         private FsmNodeEntity<T> _curNode;
         private Dictionary<Type, FsmNodeEntity<T>> _nodeDict;
         
-        public FsmSystem(T fsmOwner, ILog logger)
+        public FsmSystem(T fsmOwner)
         {
             _fsmOwner = fsmOwner;
-            _logger = logger;
             _nodeDict = new Dictionary<Type, FsmNodeEntity<T>>();
         }
 
@@ -23,7 +21,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem
         {
             if (!_nodeDict.TryAdd(node.GetType(), node))
             {
-                _logger.Error($"Node {node.GetType()} already exists");
+                Log.Error("Patch", $"Node {node.GetType()} already exists");
             }
             node.Initialize(this);
 
@@ -34,7 +32,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem
         {
             if (_curNode != null)
             {
-                _logger.Error("there is already a fsm node running");
+                Log.Error("Patch", "there is already a fsm node running");
             }
             
             if (_nodeDict.TryGetValue(typeof(TK), out FsmNodeEntity<T> node))
@@ -44,7 +42,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem
             }
             else
             {
-                _logger.Error($"Node {typeof(TK)} does not exist");
+                Log.Error("Patch", $"Node {typeof(TK)} does not exist");
             }
         }
 
@@ -52,7 +50,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.BuildInFsmSystem
         {
             if (_curNode == null)
             {
-                _logger.Error("there is not a fsm node running");
+                Log.Error("Patch", "there is not a fsm node running");
                 return;
             }
 

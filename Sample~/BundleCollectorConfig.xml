@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root Version="1">
+  <Common ShowPackageView="true" ShowEditorAlias="false" UniqueBundleName="true" />
+  <Package PackageName="TestPackage1" PackageDesc="" AutoAddressable="false" SupportExtensionless="true" LocationToLower="false" IncludeAssetGUID="false" AutoCollectShaders="true" IgnoreRuleName="NormalIgnoreRule">
+    <Group GroupActiveRule="EnableGroup" GroupName="Default Group" GroupDesc="" AssetTags="">
+      <Collector CollectPath="Packages/com.dories.yooassetsystem/Sample/Res/Prefabs/Cube.prefab" CollectGUID="1b13ceea74c469647a3deeb48aa1507c" CollectType="MainAssetCollector" AddressRule="AddressByFileName" PackRule="PackDirectory" FilterRule="CollectAll" UserData="" AssetTags="" />
+      <Collector CollectPath="Packages/com.dories.yooassetsystem/Sample/Res/Prefabs/Sphere.prefab" CollectGUID="9e53e59a7089ddd4f9dc0495cd76cac2" CollectType="MainAssetCollector" AddressRule="AddressByFileName" PackRule="PackDirectory" FilterRule="CollectAll" UserData="" AssetTags="" />
+      <Collector CollectPath="Packages/com.dories.yooassetsystem/Sample/AssetLoadScene.unity" CollectGUID="c608338b5bcfbcb40bd201da3272c268" CollectType="MainAssetCollector" AddressRule="AddressByFileName" PackRule="PackDirectory" FilterRule="CollectAll" UserData="" AssetTags="" />
+    </Group>
+  </Package>
+  <Package PackageName="TestPackage2" PackageDesc="" AutoAddressable="false" SupportExtensionless="true" LocationToLower="false" IncludeAssetGUID="false" AutoCollectShaders="true" IgnoreRuleName="NormalIgnoreRule">
+    <Group GroupActiveRule="EnableGroup" GroupName="Default Group" GroupDesc="" AssetTags="">
+      <Collector CollectPath="Packages/com.dories.yooassetsystem/Sample/Res/RawFile" CollectGUID="1e8a4873602dc4d20ab8dbac24757346" CollectType="MainAssetCollector" AddressRule="AddressByFileName" PackRule="PackCollector" FilterRule="CollectAll" UserData="" AssetTags="" />
+    </Group>
+  </Package>
+</root>
