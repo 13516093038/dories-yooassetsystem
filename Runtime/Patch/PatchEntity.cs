@@ -20,6 +20,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             [SerializeField] private bool isSupportWeakOnline = false;
             [SerializeField] private string remoteService = string.Empty;
             [SerializeField] private string bundleDecryptor = string.Empty;
+            [SerializeField] private string manifestDecryptor = string.Empty;
             [SerializeField] private int timeout = 60;
             [SerializeField] private ClearCacheBundleInfo clearCacheBundleInfo = new ClearCacheBundleInfo();
             [SerializeField] private int downloadingMaxNum = 10;
@@ -32,6 +33,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             public bool IsSupportWeakOnline => isSupportWeakOnline;
             public string RemoteServiceTypeName => remoteService;
             public string BundleDecryptorTypeName => bundleDecryptor;
+            public string ManifestDecryptorTypeName => manifestDecryptor;
             public int Timeout => timeout;
             public string PackageVersion { get; internal set; }
             public int DownloadingMaxNum => downloadingMaxNum;
@@ -43,6 +45,8 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             public IRemoteService RemoteService { get; internal set; }
 
             public IBundleDecryptor BundleDecryptor { get; internal set; }
+
+            public IManifestDecryptor ManifestDecryptor { get; internal set; }
         }
 
         [Serializable]
@@ -84,8 +88,9 @@ namespace Dories.YooAssetSystem.Runtime.Patch
         {
             foreach (var packageInfo in packagesInfoList)
             {
-                packageInfo.RemoteService = CreateRemoteService(packageInfo.RemoteServiceTypeName);
-                packageInfo.BundleDecryptor = CreateBundleDecryptor(packageInfo.BundleDecryptorTypeName);
+                packageInfo.RemoteService = CreateInstance<IRemoteService>(packageInfo.RemoteServiceTypeName);
+                packageInfo.BundleDecryptor = CreateInstance<IBundleDecryptor>(packageInfo.BundleDecryptorTypeName);
+                packageInfo.ManifestDecryptor = CreateInstance<IManifestDecryptor>(packageInfo.ManifestDecryptorTypeName);
             }
         }
 
@@ -108,42 +113,21 @@ namespace Dories.YooAssetSystem.Runtime.Patch
             return null;
         }
 
-        private IRemoteService CreateRemoteService(string remoteServiceTypeName)
+        private static T CreateInstance<T>(string typeName) where T : class
         {
-            if (!string.IsNullOrEmpty(remoteServiceTypeName))
+            if (!string.IsNullOrEmpty(typeName))
             {
                 try
                 {
-                    var type = ResolveType(remoteServiceTypeName);
+                    var type = ResolveType(typeName);
                     if (type != null)
-                        return Activator.CreateInstance(type) as IRemoteService;
+                        return Activator.CreateInstance(type) as T;
 
-                    Log.Error("Patch", $"CreateRemoteService failed: type not found, Type name: {remoteServiceTypeName}");
+                    Log.Error("Patch", $"Create {typeof(T).Name} failed: type not found, Type name: {typeName}");
                 }
                 catch (Exception e)
                 {
-                    Log.Error("Patch", $"CreateRemoteService failed: {e}, Type name: {remoteServiceTypeName}");
-                }
-            }
-
-            return null;
-        }
-
-        private IBundleDecryptor CreateBundleDecryptor(string bundleDecryptorTypeName)
-        {
-            if (!string.IsNullOrEmpty(bundleDecryptorTypeName))
-            {
-                try
-                {
-                    var type = ResolveType(bundleDecryptorTypeName);
-                    if (type != null)
-                        return Activator.CreateInstance(type) as IBundleDecryptor;
-
-                    Log.Error("Patch", $"CreateBundleDecryptor failed: type not found, Type name: {bundleDecryptorTypeName}");
-                }
-                catch (Exception e)
-                {
-                    Log.Error("Patch", $"CreateBundleDecryptor failed: {e},  Type name: {bundleDecryptorTypeName}");
+                    Log.Error("Patch", $"Create {typeof(T).Name} failed: {e}, Type name: {typeName}");
                 }
             }
 

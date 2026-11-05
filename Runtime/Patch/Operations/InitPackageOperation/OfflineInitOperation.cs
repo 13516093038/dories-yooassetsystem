@@ -9,6 +9,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
     {
         public InitializePackageOperation Initialize(ResourcePackage package, IRemoteService remoteServices,
             IBundleDecryptor bundleDecryptor = null,
+            IManifestDecryptor manifestDecryptor = null,
             EditorVirtualType editorVirtualType = EditorVirtualType.VirttualAssetBundle)
         {
             var builtinFileSystemParams = FileSystemParameters.CreateDefaultBuiltinFileSystemParameters();
@@ -19,6 +20,11 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
             if (bundleDecryptor != null)
             {
                 builtinFileSystemParams.AddParameter(EFileSystemParameter.AssetBundleDecryptor, bundleDecryptor);
+            }
+
+            if (manifestDecryptor != null)
+            {
+                builtinFileSystemParams.AddParameter(EFileSystemParameter.ManifestDecryptor, manifestDecryptor);
             }
 
             return package.InitializePackageAsync(createParameters);

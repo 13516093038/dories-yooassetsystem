@@ -15,12 +15,13 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
             ResourcePackage package,
             IRemoteService remoteServices,
             IBundleDecryptor bundleDecryptor = null,
+            IManifestDecryptor manifestDecryptor = null,
             EditorVirtualType editorVirtualType = EditorVirtualType.VirttualAssetBundle)
         {
             var createParameters = new WebPlayModeOptions();
 
 #if UNITY_WEBGL && !UNITY_EDITOR && (WEIXINMINIGAME || UNITY_WECHATMINIGAME)
-            ApplyWeChatPlatformOptions(createParameters, remoteServices, bundleDecryptor);
+            ApplyWeChatPlatformOptions(createParameters, remoteServices, bundleDecryptor, manifestDecryptor);
 #else
             // 未安装微信插件或在 Editor 中调试时，回退到普通 Web 模式
             WebPlayModeInitHelper.ApplyDefaultWebOptions(

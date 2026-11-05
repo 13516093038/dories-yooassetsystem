@@ -6,6 +6,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
     {
         InitializePackageOperation Initialize(ResourcePackage package, IRemoteService remoteServices,
             IBundleDecryptor bundleDecryptor = null,
+            IManifestDecryptor manifestDecryptor = null,
             EditorVirtualType editorVirtualType = EditorVirtualType.VirttualAssetBundle);
     }
 }

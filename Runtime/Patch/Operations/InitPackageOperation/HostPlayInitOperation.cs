@@ -9,6 +9,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
     {
         public InitializePackageOperation Initialize(ResourcePackage package, IRemoteService remoteServices,
             IBundleDecryptor bundleDecryptor = null,
+            IManifestDecryptor manifestDecryptor = null,
             EditorVirtualType editorVirtualType = EditorVirtualType.VirttualAssetBundle)
         {
             var cacheFileSystemParams = FileSystemParameters.CreateDefaultSandboxFileSystemParameters(remoteServices);
@@ -21,6 +22,12 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
             {
                 builtinFileSystemParams.AddParameter(EFileSystemParameter.AssetBundleDecryptor, bundleDecryptor);
                 cacheFileSystemParams.AddParameter(EFileSystemParameter.AssetBundleDecryptor, bundleDecryptor);
+            }
+
+            if (manifestDecryptor != null)
+            {
+                builtinFileSystemParams.AddParameter(EFileSystemParameter.ManifestDecryptor, manifestDecryptor);
+                cacheFileSystemParams.AddParameter(EFileSystemParameter.ManifestDecryptor, manifestDecryptor);
             }
 
             var createParameters = new HostPlayModeOptions();

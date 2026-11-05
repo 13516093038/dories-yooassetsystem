@@ -10,7 +10,8 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
         public static void ApplyDefaultWebOptions(
             WebPlayModeOptions createParameters,
             IRemoteService remoteServices,
-            IBundleDecryptor bundleDecryptor = null)
+            IBundleDecryptor bundleDecryptor = null,
+            IManifestDecryptor manifestDecryptor = null)
         {
             var webServerFileSystemParams = FileSystemParameters.CreateDefaultWebServerFileSystemParameters();
             var webNetworkFileSystemParams =
@@ -19,6 +20,12 @@ namespace Dories.YooAssetSystem.Runtime.Patch.Operations
             if (bundleDecryptor != null)
             {
                 webServerFileSystemParams.AddParameter(EFileSystemParameter.AssetBundleDecryptor, bundleDecryptor);
+            }
+
+            if (manifestDecryptor != null)
+            {
+                webServerFileSystemParams.AddParameter(EFileSystemParameter.ManifestDecryptor, manifestDecryptor);
+                webNetworkFileSystemParams.AddParameter(EFileSystemParameter.ManifestDecryptor, manifestDecryptor);
             }
 
             createParameters.WebServerFileSystemParameters = webServerFileSystemParams;

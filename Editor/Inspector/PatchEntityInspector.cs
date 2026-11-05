@@ -147,6 +147,13 @@ namespace Dories.YooAssetSystem.Editor.Inspector
                          "Bundle Decryptor"
                      );
 
+                     var manifestDecryptorProp = element.FindPropertyRelative("manifestDecryptor");
+                     TypeSelectorUtility.DrawTypePopup(
+                         manifestDecryptorProp,
+                         typeof(IManifestDecryptor),
+                         "Manifest Decryptor"
+                     );
+
                      EditorGUILayout.Space(4);
 
                      DrawClearCacheBundleInfo(element, packageName);

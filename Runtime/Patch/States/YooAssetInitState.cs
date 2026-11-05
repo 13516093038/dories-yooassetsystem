@@ -79,6 +79,7 @@ namespace Dories.YooAssetSystem.Runtime.Patch.States
                     package,
                     packageInfo.RemoteService,
                     packageInfo.BundleDecryptor,
+                    packageInfo.ManifestDecryptor,
                     packageInfo.EditorVirtualType);
                 await operation;
 
