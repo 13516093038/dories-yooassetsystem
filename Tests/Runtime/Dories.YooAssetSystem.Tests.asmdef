@@ -17,8 +17,15 @@
     ],
     "autoReferenced": false,
     "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
+        "UNITY_INCLUDE_TESTS",
+        "DORIES_YOOASSET"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.tuyoogame.yooasset",
+            "expression": "",
+            "define": "DORIES_YOOASSET"
+        }
+    ],
     "noEngineReferences": false
 }

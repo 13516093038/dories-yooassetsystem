@@ -29,7 +29,12 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader.PackageResGroups
 
         #region Asset 加载
 
+#if DORIES_UNITASK_SUPPORT
+        public async UniTaskVoid LoadAssetAsync<T>(string assetName, Action<T> callback, uint priority = 0)
+            where T : Object
+#else
         public async void LoadAssetAsync<T>(string assetName, Action<T> callback, uint priority = 0) where T : Object
+#endif
         {
             if (string.IsNullOrEmpty(assetName))
             {

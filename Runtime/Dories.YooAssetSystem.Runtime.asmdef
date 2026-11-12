@@ -12,12 +12,19 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "DORIES_YOOASSET"
+    ],
     "versionDefines": [
         {
             "name": "com.cysharp.unitask",
             "expression": "",
             "define": "DORIES_UNITASK_SUPPORT"
+        },
+        {
+            "name": "com.tuyoogame.yooasset",
+            "expression": "",
+            "define": "DORIES_YOOASSET"
         }
     ],
     "noEngineReferences": false
