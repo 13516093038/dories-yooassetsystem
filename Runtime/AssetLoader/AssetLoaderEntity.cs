@@ -57,6 +57,23 @@ namespace Dories.YooassetSystem.Runtime.AssetLoader
             }
         }
 
+        public AssetInfo[] GetAssetsInfo()
+        {
+            if (_defaultPackage == null)
+            {
+                Log.Error("AssetLoader", "Default package is not set, cannot load asset");
+                return null;
+            }
+            
+            return _defaultPackage.GetAllAssetInfos();
+        }
+
+        public AssetInfo[] GetAssetsInfo(string packageName)
+        {
+            var package = GetPackage(packageName);
+            return package.GetAllAssetInfos();
+        }
+
         #region Load Assets
 
         public void LoadAssetAsync<T>(string assetName, Action<T> callback, uint priority = 0) where T : Object
